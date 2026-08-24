@@ -1,14 +1,11 @@
 """
 Dejaf Tadlu - Telegram Ordering Bot
-Browse catalog, cart, checkout. Order summary goes to shop owner.
 """
 
 import os
 import logging
 import uuid
 from dotenv import load_dotenv
-
-from aiohttp import web
 
 from telegram import (
     InlineKeyboardButton,
@@ -31,7 +28,7 @@ from telegram.ext import (
 from products import PRODUCTS, CATEGORIES
 
 try:
-    from payments import initialize_payment, verify_payment, payment_succeeded, ChapaError
+    from payments import initialize_payment, ChapaError
     HAS_CHAPA = True
 except Exception:
     HAS_CHAPA = False
@@ -39,20 +36,24 @@ except Exception:
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_CHAT_ID = os.getenv("OWNER_CHAT_ID")
+WEBSITE_URL = os.getenv("WEBSITE_URL", "https://dejaf-tadlu-onlineshopping.netlify.app")
+TELEBIRR_NUMBER = os.getenv("TELEBIRR_NUMBER", "0919766932")
+CBE_ACCOUNT = os.getenv("CBE_ACCOUNT", "")
+AWASH_ACCOUNT = os.getenv("AWASH_ACCOUNT", "")
+CHANNEL_URL = "https://t.me/etc12tell4"
 VAT_RATE = 0.15
 SHOP_NAME = "Dejaf Tadlu"
-WEBSITE_URL = os.getenv("WEBSITE_URL", "https://dejaf-tadlu-onlineshopping.netlify.app")
-PORT = int(os.getenv("PORT", "10000"))
 
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
 PRODUCTS_BY_ID = {p["id"]: p for p in PRODUCTS}
-
 carts = {}
 checkout_state = {}
+orders_by_chat = {}
 pending_orders = {}
 
 
@@ -61,7 +62,7 @@ def fmt_etb(amount):
 
 
 def unit_price(product):
-    return product["sale"] if product["sale"] is not None else product["price"]
+    return product["sale"] if product.get("sale") is not None else product["price"]
 
 
 def cart_lines(chat_id):
@@ -72,7 +73,12 @@ def cart_lines(chat_id):
         if not p or qty <= 0:
             continue
         price = unit_price(p)
-        lines.append({"product": p, "qty": qty, "unit": price, "line_total": price * qty})
+        lines.append({
+            "product": p,
+            "qty": qty,
+            "unit": price,
+            "line_total": price * qty,
+        })
     return lines
 
 
@@ -93,6 +99,7 @@ def main_menu_keyboard(chat_id=None):
     if chat_id is not None and cart_lines(chat_id):
         buttons.append([InlineKeyboardButton("Checkout", callback_data="checkout:start")])
         buttons.append([InlineKeyboardButton("Clear Cart", callback_data="cart:clear")])
+    buttons.append([InlineKeyboardButton("Join our Channel", url=CHANNEL_URL)])
     buttons.append([InlineKeyboardButton("Visit Our Website", url=WEBSITE_URL)])
     return InlineKeyboardMarkup(buttons)
 
@@ -125,18 +132,19 @@ def text_products_in(cat):
 def products_keyboard(cat):
     buttons = []
     for p in text_products_in(cat):
-        price = unit_price(p)
-        label = p["name"] + " - " + fmt_etb(price)
+        label = p["name"] + " - " + fmt_etb(unit_price(p))
         buttons.append([InlineKeyboardButton(label, callback_data="add:" + str(p["id"]))])
     buttons.append([InlineKeyboardButton("Back to Categories", callback_data="menu:categories")])
     return InlineKeyboardMarkup(buttons)
 
 
 def product_photo_keyboard(product):
-    price = unit_price(product)
-    return InlineKeyboardMarkup(
-        [[InlineKeyboardButton("Add - " + fmt_etb(price), callback_data="add:" + str(product["id"]))]]
-    )
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(
+            "Add - " + fmt_etb(unit_price(product)),
+            callback_data="add:" + str(product["id"]),
+        )
+    ]])
 
 
 def cart_keyboard(chat_id):
@@ -145,13 +153,11 @@ def cart_keyboard(chat_id):
         pid = line["product"]["id"]
         name = line["product"]["name"]
         short = name if len(name) <= 22 else name[:20] + ".."
-        buttons.append(
-            [
-                InlineKeyboardButton("-", callback_data="dec:" + str(pid)),
-                InlineKeyboardButton(short + " x" + str(line["qty"]), callback_data="noop"),
-                InlineKeyboardButton("+", callback_data="inc:" + str(pid)),
-            ]
-        )
+        buttons.append([
+            InlineKeyboardButton("-", callback_data="dec:" + str(pid)),
+            InlineKeyboardButton(short + " x" + str(line["qty"]), callback_data="noop"),
+            InlineKeyboardButton("+", callback_data="inc:" + str(pid)),
+        ])
     if cart_lines(chat_id):
         buttons.append([InlineKeyboardButton("Checkout", callback_data="checkout:start")])
         buttons.append([InlineKeyboardButton("Clear Cart", callback_data="cart:clear")])
@@ -164,7 +170,7 @@ def cart_text(chat_id):
     lines = cart_lines(chat_id)
     if not lines:
         return "Your cart is empty. Browse the catalog to add something!"
-    parts = ["Your Cart", ""]
+    parts = ["Your Cart\n"]
     for l in lines:
         parts.append(
             str(l["qty"]) + " x " + l["product"]["name"] + " - " + fmt_etb(l["line_total"])
@@ -190,7 +196,6 @@ async def send_cart_photo_album(context, chat_id):
             try:
                 f = open(path, "rb")
             except FileNotFoundError:
-                logger.error("Missing photo: %s", path)
                 continue
             opened.append(f)
             media.append(InputMediaPhoto(f, caption=l["product"]["name"] + " x" + str(l["qty"])))
@@ -203,7 +208,7 @@ async def send_cart_photo_album(context, chat_id):
             f.close()
 
 
-async def start(update, context):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     payload = context.args[0] if context.args else None
     loaded = 0
@@ -218,17 +223,14 @@ async def start(update, context):
             except (ValueError, IndexError):
                 skipped = True
                 continue
-            p = PRODUCTS_BY_ID.get(pid)
-            if not p or qty <= 0 or p.get("builder"):
+            if pid not in PRODUCTS_BY_ID or qty <= 0 or PRODUCTS_BY_ID[pid].get("builder"):
                 skipped = True
                 continue
             carts[chat_id][pid] = carts[chat_id].get(pid, 0) + qty
             loaded += 1
 
     if loaded > 0:
-        note = ""
-        if skipped:
-            note = "\n\nSome items could not be loaded. Please re-add anything missing."
+        note = "\n\nSome items could not be loaded." if skipped else ""
         await update.message.reply_text(
             "Selam! Welcome to " + SHOP_NAME + "\n\n"
             "We loaded " + str(loaded) + " item(s) from your website cart." + note + "\n\n"
@@ -241,64 +243,34 @@ async def start(update, context):
         "Selam! Welcome to " + SHOP_NAME + "\n\n"
         "Browse our catalog and order right here in Telegram.\n\n"
         "Try Weekly Asbeza - build a vegetable basket from Grocery.\n"
-        "Payments: Telebirr, CBE Birr, Awash Bank, Cash on Delivery",
+        "Payments: Telebirr, CBE Birr, Awash Bank, Cash on Delivery\n"
+        "Channel: " + CHANNEL_URL,
         reply_markup=main_menu_keyboard(chat_id),
     )
 
 
-async def myid(update, context):
+async def myid(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "Your chat ID is: " + str(update.effective_chat.id) + "\n\n"
-        "If you are the shop owner, put this in .env as OWNER_CHAT_ID and restart."
+        "Put this in Render as OWNER_CHAT_ID if you are the shop owner."
     )
 
 
-async def cancel(update, context):
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
-    if checkout_state.pop(chat_id, None) is not None:
+    if checkout_state.pop(chat_id, None):
         await update.message.reply_text("Checkout cancelled.", reply_markup=ReplyKeyboardRemove())
     await update.message.reply_text(
-        "What would you like to do?", reply_markup=main_menu_keyboard(chat_id)
+        "What would you like to do?",
+        reply_markup=main_menu_keyboard(chat_id),
     )
 
 
-async def show_grocery_asbeza(context, chat_id, edit_query=None):
-    tip = (
-        "Weekly Asbeza\n\n"
-        "Add vegetables and staples from the list below.\n"
-        "Your cart total updates as you add.\n\n"
-        "Payments: Telebirr, CBE Birr, Awash Bank, Cash on Delivery"
-    )
-    if edit_query:
-        await edit_query.edit_message_text(tip, reply_markup=products_keyboard("Grocery"))
-    else:
-        await context.bot.send_message(
-            chat_id=chat_id, text=tip, reply_markup=products_keyboard("Grocery")
-        )
-    for p in photo_products_in("Grocery"):
-        try:
-            with open(p["photo"], "rb") as photo_file:
-                await context.bot.send_photo(
-                    chat_id=chat_id,
-                    photo=photo_file,
-                    caption=p["name"] + "\n" + fmt_etb(unit_price(p)),
-                    reply_markup=product_photo_keyboard(p),
-                )
-        except FileNotFoundError:
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=p["name"] + " - " + fmt_etb(unit_price(p)),
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
-                ),
-            )
-
-
-async def on_button(update, context):
+async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     chat_id = query.message.chat_id
-    data = query.data or ""
+    data = query.data
 
     if data == "noop":
         return
@@ -315,7 +287,30 @@ async def on_button(update, context):
         return
 
     if data == "menu:asbeza":
-        await show_grocery_asbeza(context, chat_id, edit_query=query)
+        tip = (
+            "Weekly Asbeza\n\n"
+            "Add vegetables and staples from the list below.\n"
+            "Cart total updates as you add.\n\n"
+            "Payments: Telebirr, CBE Birr, Awash Bank, Cash on Delivery"
+        )
+        await query.edit_message_text(tip, reply_markup=products_keyboard("Grocery"))
+        for p in photo_products_in("Grocery"):
+            try:
+                with open(p["photo"], "rb") as photo_file:
+                    await context.bot.send_photo(
+                        chat_id=chat_id,
+                        photo=photo_file,
+                        caption=p["name"] + "\n" + fmt_etb(unit_price(p)),
+                        reply_markup=product_photo_keyboard(p),
+                    )
+            except FileNotFoundError:
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=p["name"] + " - " + fmt_etb(unit_price(p)),
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
+                    ),
+                )
         return
 
     if data.startswith("cat:"):
@@ -357,11 +352,19 @@ async def on_button(update, context):
         pid = int(data.split(":", 1)[1])
         p = PRODUCTS_BY_ID.get(pid)
         if p and p.get("builder"):
-            await show_grocery_asbeza(context, chat_id)
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=(
+                    "Weekly Asbeza\n\n"
+                    "Pick items from Grocery (vegetables + staples).\n"
+                    "Add each with + ."
+                ),
+                reply_markup=products_keyboard("Grocery"),
+            )
             return
         carts.setdefault(chat_id, {})
         carts[chat_id][pid] = carts[chat_id].get(pid, 0) + 1
-        await query.answer(text="Added to cart", show_alert=False)
+        await query.answer(text="Added to cart")
         return
 
     if data.startswith("inc:"):
@@ -399,19 +402,87 @@ async def on_button(update, context):
     if data == "checkout:start":
         if not cart_lines(chat_id):
             await query.edit_message_text(
-                "Your cart is empty.", reply_markup=main_menu_keyboard(chat_id)
+                "Your cart is empty.",
+                reply_markup=main_menu_keyboard(chat_id),
             )
             return
         checkout_state[chat_id] = {"stage": "name"}
         await query.edit_message_text("Checkout\n\nPlease send your full name.")
         return
 
+    # Payment method after address
+    if data.startswith("pay:"):
+        method = data.split(":", 1)[1]
+        state = checkout_state.get(chat_id)
+        if not state or state.get("stage") != "payment":
+            return
+        state["payment"] = method
+        state["stage"] = "contact"
+        await query.edit_message_text("Payment method: " + method)
 
-async def on_text(update, context):
+        if method == "Telebirr":
+            tip = (
+                "Pay with Telebirr\n\n"
+                "Send the TOTAL to: " + TELEBIRR_NUMBER + "\n"
+                "Use your name as the reason.\n\n"
+                "Then share your phone number below."
+            )
+        elif method == "CBE Birr":
+            tip = (
+                "Pay with CBE Birr\n\n"
+                + (("Account: " + CBE_ACCOUNT + "\n\n") if CBE_ACCOUNT else "")
+                + "Share your phone number below."
+            )
+        elif method == "Awash Bank":
+            tip = (
+                "Pay with Awash Bank\n\n"
+                + (("Account: " + AWASH_ACCOUNT + "\n\n") if AWASH_ACCOUNT else "")
+                + "Share your phone number below."
+            )
+        else:
+            tip = (
+                "Cash on Delivery\n\n"
+                "Pay when the order arrives.\n"
+                "Share your phone number to finish."
+            )
+
+        kb = ReplyKeyboardMarkup(
+            [[KeyboardButton("Share my phone number", request_contact=True)]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
+        await context.bot.send_message(chat_id=chat_id, text=tip, reply_markup=kb)
+        return
+
+
+async def on_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     text = (update.message.text or "").strip()
     state = checkout_state.get(chat_id)
+
     if not state:
+        # Maybe transaction ID for an open order
+        order = orders_by_chat.get(chat_id)
+        if order and order.get("payment") != "Cash on Delivery" and len(text) >= 6:
+            if OWNER_CHAT_ID:
+                try:
+                    await context.bot.send_message(
+                        chat_id=int(OWNER_CHAT_ID),
+                        text=(
+                            "TX / REFERENCE\n"
+                            "Order: " + order["order_id"] + "\n"
+                            "Payment: " + str(order.get("payment")) + "\n"
+                            "Reference: " + text + "\n"
+                            "Customer chat: " + str(chat_id)
+                        ),
+                    )
+                except Exception as e:
+                    logger.error("Notify owner tx failed: %s", e)
+            await update.message.reply_text(
+                "Reference received for order " + order["order_id"] + ".\n"
+                "We will verify shortly."
+            )
+            return
         await update.message.reply_text(
             "Use the menu buttons to browse and order.",
             reply_markup=main_menu_keyboard(chat_id),
@@ -428,15 +499,14 @@ async def on_text(update, context):
 
     if state.get("stage") == "address":
         state["address"] = text
-        state["stage"] = "contact"
-        kb = ReplyKeyboardMarkup(
-            [[KeyboardButton("Share my phone number", request_contact=True)]],
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        )
-        await update.message.reply_text(
-            "Please share your phone number (or type it).", reply_markup=kb
-        )
+        state["stage"] = "payment"
+        pay_kb = InlineKeyboardMarkup([
+            [InlineKeyboardButton("Telebirr", callback_data="pay:Telebirr")],
+            [InlineKeyboardButton("CBE Birr", callback_data="pay:CBE Birr")],
+            [InlineKeyboardButton("Awash Bank", callback_data="pay:Awash Bank")],
+            [InlineKeyboardButton("Cash on Delivery", callback_data="pay:Cash on Delivery")],
+        ])
+        await update.message.reply_text("Choose your payment method:", reply_markup=pay_kb)
         return
 
     if state.get("stage") == "contact":
@@ -445,7 +515,7 @@ async def on_text(update, context):
         return
 
 
-async def on_contact(update, context):
+async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     state = checkout_state.get(chat_id)
     if not state or state.get("stage") != "contact":
@@ -455,13 +525,14 @@ async def on_contact(update, context):
     await finish_checkout(update, context, chat_id)
 
 
-async def finish_checkout(update, context, chat_id):
+async def finish_checkout(update: Update, context: ContextTypes.DEFAULT_TYPE, chat_id: int):
     state = checkout_state.pop(chat_id, {})
     lines = cart_lines(chat_id)
     if not lines:
         await update.message.reply_text("Your cart is empty.", reply_markup=ReplyKeyboardRemove())
         await update.message.reply_text(
-            "What would you like to do?", reply_markup=main_menu_keyboard(chat_id)
+            "What would you like to do?",
+            reply_markup=main_menu_keyboard(chat_id),
         )
         return
 
@@ -469,6 +540,7 @@ async def finish_checkout(update, context, chat_id):
     name = state.get("name", "-")
     address = state.get("address", "-")
     contact = state.get("contact", "-")
+    payment = state.get("payment", "Not specified")
     order_id = "DJT-" + uuid.uuid4().hex[:8].upper()
 
     summary_lines = [
@@ -479,76 +551,86 @@ async def finish_checkout(update, context, chat_id):
         "Order " + order_id + "\n"
         "Customer: " + name + "\n"
         "Phone: " + str(contact) + "\n"
-        "Address: " + address + "\n\n"
+        "Address: " + address + "\n"
+        "Payment: " + payment + "\n\n"
         + "\n".join(summary_lines)
         + "\n\nSubtotal: " + fmt_etb(subtotal)
         + "\nVAT (15%): " + fmt_etb(vat)
         + "\nTotal: " + fmt_etb(total)
-        + "\n\nPayment: Telebirr / CBE Birr / Awash Bank / Cash on Delivery"
     )
 
     if OWNER_CHAT_ID:
         try:
             await context.bot.send_message(
-                chat_id=int(OWNER_CHAT_ID), text="NEW ORDER\n\n" + summary
+                chat_id=int(OWNER_CHAT_ID),
+                text="NEW ORDER\n\n" + summary,
             )
         except Exception as e:
             logger.error("Failed to notify owner: %s", e)
 
-    # Optional Chapa payment link
-    pay_note = ""
-    if HAS_CHAPA:
-        tx_ref = "dejaf-" + uuid.uuid4().hex[:12]
-        try:
-            checkout_url = await initialize_payment(
-                amount=total,
-                email="order@dejaf.local",
-                first_name=name.split()[0] if name else "Customer",
-                last_name=name.split()[-1] if name and len(name.split()) > 1 else "Customer",
-                tx_ref=tx_ref,
-            )
-            pending_orders[tx_ref] = {
-                "chat_id": chat_id,
-                "order_id": order_id,
-                "summary": summary,
-                "total": total,
-                "name": name,
-            }
-            pay_note = "\n\nYou can also pay online with the button below."
-            await update.message.reply_text(
-                "Order received. Thank you!" + pay_note,
-                reply_markup=ReplyKeyboardRemove(),
-            )
-            await update.message.reply_text(
-                summary,
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("Pay " + fmt_etb(total) + " Now", url=checkout_url)]]
-                ),
-            )
-            await update.message.reply_text(
-                "What would you like to do?", reply_markup=main_menu_keyboard(chat_id)
-            )
-            carts[chat_id] = {}
-            return
-        except Exception as e:
-            logger.error("Chapa failed: %s", e)
-
+    orders_by_chat[chat_id] = {
+        "order_id": order_id,
+        "summary": summary,
+        "payment": payment,
+        "total": total,
+        "name": name,
+    }
     carts[chat_id] = {}
+
     await update.message.reply_text("Order received. Thank you!", reply_markup=ReplyKeyboardRemove())
     await update.message.reply_text(
-        "We got your order (" + order_id + ").\n"
-        "We will confirm delivery and payment with you shortly.\n\n" + summary,
+        "We got your order (" + order_id + ").\n\n" + summary,
         reply_markup=main_menu_keyboard(chat_id),
     )
 
+    if payment != "Cash on Delivery":
+        await update.message.reply_text(
+            "After you pay, send a photo of the receipt here,\n"
+            "or type the transaction ID.\n\n"
+            "We will confirm your order."
+        )
 
-async def health(request):
-    return web.Response(text="Dejaf Tadlu bot is running.")
+    await update.message.reply_text("Offers & news: " + CHANNEL_URL)
+
+
+async def on_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    order = orders_by_chat.get(chat_id)
+    caption = (update.message.caption or "").strip()
+
+    if not order:
+        await update.message.reply_text("No open order found. Use Checkout or /start first.")
+        return
+
+    if OWNER_CHAT_ID:
+        try:
+            await context.bot.send_message(
+                chat_id=int(OWNER_CHAT_ID),
+                text=(
+                    "RECEIPT RECEIVED\n"
+                    "Order: " + order["order_id"] + "\n"
+                    "Payment: " + str(order.get("payment")) + "\n"
+                    "Customer chat: " + str(chat_id) + "\n"
+                    + (("Note: " + caption + "\n") if caption else "")
+                ),
+            )
+            await context.bot.forward_message(
+                chat_id=int(OWNER_CHAT_ID),
+                from_chat_id=chat_id,
+                message_id=update.message.message_id,
+            )
+        except Exception as e:
+            logger.error("Forward receipt failed: %s", e)
+
+    await update.message.reply_text(
+        "Receipt received for order " + order["order_id"] + ".\n"
+        "We will verify and confirm soon."
+    )
 
 
 def main():
     if not BOT_TOKEN:
-        print("BOT_TOKEN is not set. Copy .env.example to .env and add your token from @BotFather.")
+        print("BOT_TOKEN is not set. Add it in Render Environment variables.")
         raise SystemExit(1)
 
     application = Application.builder().token(BOT_TOKEN).build()
@@ -557,25 +639,10 @@ def main():
     application.add_handler(CommandHandler("cancel", cancel))
     application.add_handler(CallbackQueryHandler(on_button))
     application.add_handler(MessageHandler(filters.CONTACT, on_contact))
+    application.add_handler(MessageHandler(filters.PHOTO, on_photo))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
 
-    # Health HTTP server for Render (keeps free tier awake checks happy)
-    async def post_init(app):
-        aio = web.Application()
-        aio.router.add_get("/", health)
-        aio.router.add_get("/health", health)
-        runner = web.AppRunner(aio)
-        await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", PORT)
-        try:
-            await site.start()
-            logger.info("Health server on port %s", PORT)
-        except OSError as e:
-            logger.warning("Health server not started: %s", e)
-
-    application.post_init = post_init
-
-    logger.info("Starting bot (polling)...")
+    logger.info("Starting bot...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
