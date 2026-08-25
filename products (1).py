@@ -54,9 +54,9 @@ PRODUCTS = [
     {"id": 43, "name": "Men's Pullover Hoodie", "cat": "Apparel", "price": 900, "sale": None, "photo": "photos/43.jpg"},
     {"id": 44, "name": "Men's Pique Polo Shirt", "cat": "Apparel", "price": 650, "sale": None, "photo": "photos/44.jpg"},
     {"id": 45, "name": "Men's Boxer Shorts, Assorted Patterns (6-Pack)", "cat": "Apparel", "price": 780, "sale": None, "photo": "photos/45.jpg"},
-    {"id": 46, "name": "Personalized Gift Box", "cat": "Gift Packages", "price": 1800, "sale": None, "photo": None,photo": "photos/46.jpg"},
-    {"id": 47, "name": "Birthday Gift Box", "cat": "Gift Packages", "price": 2100, "sale": None, "photo": None,photo": "photos/47.jpg"},
-    {"id": 48, "name": "Celebration Gift Box", "cat": "Gift Packages", "price": 1950, "sale": None, "photo": None,"photo": "photos/48.jpg"},
+    {"id": 46, "name": "Personalized Gift Box", "cat": "Gift Packages", "price": 1800, "sale": None, "photo": "photos/46.jpg"},
+    {"id": 47, "name": "Birthday Gift Box", "cat": "Gift Packages", "price": 2100, "sale": None, "photo": "photos/47.jpg"},
+    {"id": 48, "name": "Celebration Gift Box", "cat": "Gift Packages", "price": 1950, "sale": None, "photo": "photos/48.jpg"},
 ]
 
 CATEGORIES = sorted(set(p["cat"] for p in PRODUCTS))
