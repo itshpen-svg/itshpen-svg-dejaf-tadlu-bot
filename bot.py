@@ -568,14 +568,12 @@ async def finish_checkout(update: Update, context: ContextTypes.DEFAULT_TYPE, ch
 
     try:
         checkout_url = await initialize_payment(
-            amount=total,
-            currency="ETB",
-            email=placeholder_email,
-            first_name=first_name,
-            last_name=last_name,
-            tx_ref=tx_ref,
-            order_description=", ".join(order_lines),
-        )
+    amount=total,
+    email=placeholder_email,
+    first_name=first_name,
+    last_name=last_name,
+    tx_ref=tx_ref,
+)
     except ChapaError as e:
         logger.error("Chapa initialize failed for %s: %s", tx_ref, e)
         # Fall back to the old flow so an order still isn't lost if payment setup fails.
