@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dejaf Tadlu — Ethiopian Marketplace</title>
+<link rel="preload" as="image" href="weekly-asbeza.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Ethiopic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2B1B14;
+    --paper:#F8EFE0;
+    --paper-dim:#EFE1C7;
+    --gold:#C0922E;
+    --gold-light:#DDB35B;
+    --rust:#B5482A;
+    --green:#37613F;
+    --charcoal:#2A211B;
+    --line: rgba(43,27,20,0.14);
+    --shadow: 0 10px 30px rgba(43,27,20,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--charcoal);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.display{
+    font-family:'Fraunces', serif;
+    color:var(--ink);
+    margin:0;
+  }
+  .mono{ font-family:'JetBrains Mono', monospace; }
+  .amharic{ font-family:'Noto Sans Ethiopic', sans-serif; }
+  a{ color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+
+  /* ===== Top bar ===== */
+  .topbar{
+    background:var(--ink);
+    color:var(--paper);
+    font-size:12px;
+    letter-spacing:0.04em;
+    padding:7px 24px;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:6px;
+    font-family:'JetBrains Mono', monospace;
+    opacity:0.92;
+  }
+  .topbar a{ text-decoration:none; }
+  .topbar a:hover{ color:var(--gold-light); }
+
+  /* ===== Nav ===== */
+  nav{
+    position:sticky;
+    top:0;
+    z-index:40;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+    padding:16px 24px;
+  }
+  .nav-inner{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    align-items:center;
+    gap:24px;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    flex-shrink:0;
+  }
+  .brand .mark{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:22px;
+    color:var(--ink);
+  }
+  .brand .sub{
+    font-family:'Noto Sans Ethiopic', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    color:var(--gold);
+  }
+  .search-wrap{
+    flex:1;
+    max-width:420px;
+    position:relative;
+  }
+  .search-suggestions{
+    position:absolute;
+    top:calc(100% + 4px);
+    left:0;
+    right:0;
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:6px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+    z-index:45;
+    display:none;
+  }
+  .search-suggestions.open{ display:block; }
+  .suggestion-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:9px 14px;
+    font-size:13px;
+    cursor:pointer;
+    border-bottom:1px solid var(--line);
+  }
+  .suggestion-item:last-child{ border-bottom:none; }
+  .suggestion-item:hover{ background:var(--paper-dim); }
+  .suggestion-item .sname{ color:var(--ink); }
+  .suggestion-item .sprice{ font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--gold); flex-shrink:0; }
+  .filter-bar{
+    display:flex;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+    margin:-8px 0 20px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--line);
+  }
+  .filter-group{
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .filter-group label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    color:#8a7a6c;
+  }
+  .filter-group select{
+    font-family:'Inter', sans-serif;
+    font-size:13px;
+    padding:6px 10px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:#fff;
+    color:var(--charcoal);
+  }
+  .price-range-inputs{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .price-range-inputs input{
+    width:68px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:12.5px;
+    padding:6px 8px;
+    border:1px solid var(--line);
+    border-radius:4px;
+  }
+  .price-range-inputs span{ color:#9a8a7c; }
+  .sale-toggle{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px;
+    color:var(--charcoal);
+    cursor:pointer;
+  }
+  .sale-toggle input{ accent-color:var(--rust); width:15px; height:15px; }
+  .search-wrap input{
+    width:100%;
+    padding:10px 14px 10px 36px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:#fff;
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+    outline:none;
+    transition:border-color .15s ease;
+  }
+  .search-wrap input:focus{ border-color:var(--gold); }
+  .search-wrap svg{
+    position:absolute;
+    left:11px; top:50%;
+    transform:translateY(-50%);
+    width:15px; height:15px;
+    opacity:0.45;
+  }
+  .nav-actions{
+    margin-left:auto;
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .cart-btn{
+    position:relative;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:10px 16px;
+    border-radius:3px;
+    font-size:13px;
+    font-weight:500;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition:background .15s ease;
+  }
+  .cart-btn:hover{ background:#1c110c; }
+  .cart-count{
+    background:var(--rust);
+    color:#fff;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    min-width:18px;
+    height:18px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 4px;
+  }
+
+  /* ===== Hero ===== */
+  .hero{
+    max-width:1180px;
+    margin:0 auto;
+    padding:64px 24px 40px;
+    display:grid;
+    grid-template-columns:1.1fr 0.9fr;
+    gap:48px;
+    align-items:center;
+  }
+  .hero .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--gold);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .hero .eyebrow::before{
+    content:'';
+    width:26px; height:1px;
+    background:var(--gold);
+  }
+  .hero h1{
+    font-size:clamp(34px, 5vw, 54px);
+    line-height:1.05;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .hero h1 em{ font-style:italic; color:var(--gold); font-weight:500; }
+  .hero p{
+    margin-top:18px;
+    font-size:16px;
+    line-height:1.6;
+    color:#5a4a3f;
+    max-width:46ch;
+  }
+  .hero-amharic{
+    font-family:'Noto Sans Ethiopic', sans-serif;
+    margin-top:14px !important;
+    margin-bottom:0;
+    font-size:15.5px !important;
+    line-height:1.7 !important;
+    color:#6b5b4d !important;
+  }
+  .hero-amharic + p{ margin-top:6px; }
+  .hero-cta{
+    margin-top:28px;
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .btn-primary{
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:13px 22px;
+    border-radius:3px;
+    font-size:14px;
+    font-weight:500;
+  }
+  .btn-primary:hover{ background:#1c110c; }
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--line);
+    padding:13px 22px;
+    border-radius:3px;
+    font-size:14px;
+    font-weight:500;
+    color:var(--ink);
+  }
+  .btn-ghost:hover{ border-color:var(--gold); color:var(--gold); }
+
+  .ledger-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:4px;
+    box-shadow:var(--shadow);
+    padding:22px 24px;
+    position:relative;
+    transform:rotate(1.2deg);
+  }
+  .ledger-card::before{
+    content:'';
+    position:absolute;
+    top:-10px; left:26px;
+    width:20px; height:20px;
+    background:var(--gold);
+    border-radius:50%;
+    box-shadow:0 3px 6px rgba(0,0,0,0.2);
+  }
+  .ledger-card::after{
+    content:'';
+    position:absolute;
+    top:-4px; left:34px;
+    width:4px; height:4px;
+    background:var(--paper);
+    border-radius:50%;
+  }
+  .ledger-card .row{
+    display:flex;
+    justify-content:space-between;
+    padding:9px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:13px;
+  }
+  .ledger-card .row:last-child{ border-bottom:none; }
+  .ledger-card .row span:first-child{ color:#7a6a5c; }
+  .ledger-card .row span:last-child{ font-family:'JetBrains Mono', monospace; color:var(--ink); }
+  .ledger-card .head{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin-bottom:10px;
+  }
+
+  /* ===== Category rail ===== */
+  .cat-rail{
+    max-width:1180px;
+    margin:8px auto 0;
+    padding:0 24px;
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding-bottom:8px;
+  }
+  .cat-chip{
+    flex-shrink:0;
+    padding:9px 16px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:20px;
+    font-size:13px;
+    font-weight:500;
+    color:var(--charcoal);
+    transition:all .15s ease;
+    white-space:nowrap;
+    display:flex;
+    align-items:center;
+    gap:7px;
+  }
+  .cat-chip svg{ width:14px; height:14px; opacity:0.7; }
+  .cat-chip:hover{ border-color:var(--gold); }
+  .cat-chip.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--paper);
+  }
+  .cat-chip.active svg{ opacity:1; }
+
+  /* ===== Catalog ===== */
+  .catalog{
+    max-width:1180px;
+    margin:0 auto;
+    padding:32px 24px 100px;
+  }
+  .catalog-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:20px;
+    border-bottom:1px solid var(--line);
+    padding-bottom:14px;
+  }
+  .catalog-head h2{
+    font-size:22px;
+    font-weight:600;
+  }
+  .catalog-head .count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:#9a8a7c;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(230px, 1fr));
+    gap:22px;
+  }
+
+  /* Featured packages: Weekly Asbeza, then Gift Packages directly under it */
+  .packages-strip{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 24px 4px;
+  }
+  .packages-strip.hidden{ display:none; }
+  .packages-gifts-head{
+    margin-top:36px;
+  }
+  .packages-asbeza .card{
+    max-width:420px;
+  }
+  .packages-asbeza .card-img{
+    height:220px;
+    min-height:220px;
+  }
+  .packages-asbeza .card-img picture{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:1;
+    display:block;
+  }
+  .card-img picture img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .photo-duo picture{
+    position:relative;
+    inset:auto;
+    width:100%;
+    height:100%;
+  }
+  .real-photo{
+    object-fit:cover;
+    object-position:center;
+  }
+  .packages-asbeza .icon-badge{
+    opacity:0; /* hide placeholder when real photo is present */
+  }
+  .packages-asbeza .card-img:has(.real-photo[style*="display: none"]) .icon-badge,
+  .packages-asbeza .card-img:not(:has(.real-photo)) .icon-badge{
+    opacity:1;
+  }
+
+  /* Product card = hang tag */
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    transition:transform .18s ease, box-shadow .18s ease;
+    position:relative;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    box-shadow:var(--shadow);
+  }
+  .card-img{
+    height:150px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:
+      radial-gradient(circle at 30% 20%, rgba(192,146,46,0.10), transparent 60%),
+      var(--paper-dim);
+    position:relative;
+    overflow:hidden;
+    border-bottom:1px solid var(--line);
+  }
+  .card-img picture{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:1;
+    display:block;
+  }
+  .card-img picture img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .photo-duo picture{
+    position:relative;
+    inset:auto;
+    width:100%;
+    height:100%;
+  }
+  .real-photo{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    z-index:1;
+    background:var(--paper-dim);
+    -webkit-touch-callout:none;
+    -webkit-user-drag:none;
+    -webkit-user-select:none;
+    user-select:none;
+    pointer-events:none;
+  }
+  .card-img.has-duo{ height:180px; }
+  .photo-duo{
+    position:absolute;
+    inset:0;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    z-index:1;
+  }
+  .photo-duo img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    background:var(--paper-dim);
+  }
+  .photo-duo img:first-child{ border-right:1px solid rgba(43,27,20,0.08); }
+  .thumb .photo-duo{ position:relative; inset:auto; width:100%; height:100%; }
+
+  .icon-badge{
+    width:88px; height:88px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:inset 0 0 0 1px rgba(43,27,20,0.06), 0 4px 10px rgba(43,27,20,0.08);
+  }
+  .icon-badge svg{
+    width:44px; height:44px;
+  }
+  .thumb .icon-badge{ width:44px; height:44px; }
+  .thumb .icon-badge svg{ width:22px; height:22px; }
+  .card-img img{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .tag-hole{
+    position:absolute;
+    top:10px; right:12px;
+    width:12px; height:12px;
+    border-radius:50%;
+    background:var(--paper);
+    border:1px solid var(--line);
+  }
+  .card-body{
+    padding:14px 16px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    flex:1;
+  }
+  .card-cat{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--gold);
+  }
+  .card-name{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:16px;
+    color:var(--ink);
+    line-height:1.3;
+  }
+  .card-desc{
+    font-size:12.5px;
+    color:#85756a;
+    line-height:1.45;
+    flex:1;
+  }
+  .card-footer{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:8px;
+  }
+  .price{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:500;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .price .strike{
+    text-decoration:line-through;
+    color:#c2b3a5;
+    font-size:11.5px;
+    margin-right:6px;
+  }
+  .add-btn{
+    background:var(--paper);
+    border:1px solid var(--ink);
+    color:var(--ink);
+    padding:7px 13px;
+    border-radius:3px;
+    font-size:12.5px;
+    font-weight:600;
+    transition:all .15s ease;
+  }
+  .add-btn:hover{ background:var(--ink); color:var(--paper); }
+  .add-btn.added{ background:var(--green); border-color:var(--green); color:#fff; }
+  .card-stepper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:var(--green);
+    border-radius:3px;
+    padding:4px 6px;
+  }
+  .card-step-btn{
+    width:22px; height:22px;
+    border:none;
+    background:rgba(255,255,255,0.2);
+    color:#fff;
+    border-radius:3px;
+    font-size:14px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    line-height:1;
+    transition:background .15s ease;
+  }
+  .card-step-btn:hover{ background:rgba(255,255,255,0.35); }
+  .card-step-qty{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    font-weight:600;
+    color:#fff;
+    min-width:14px;
+    text-align:center;
+  }
+  .sale-badge{
+    position:absolute;
+    top:10px; left:0;
+    background:var(--rust);
+    color:#fff;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.05em;
+    padding:4px 10px 4px 8px;
+    border-radius:0 3px 3px 0;
+    z-index:2;
+  }
+  .empty-state{
+    text-align:center;
+    padding:60px 20px;
+    color:#9a8a7c;
+  }
+  .empty-state .glyph{ font-size:34px; margin-bottom:10px; }
+
+  /* ===== Cart drawer ===== */
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(43,27,20,0.35);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+    z-index:50;
+  }
+  .overlay.open{ opacity:1; pointer-events:auto; }
+  .drawer{
+    position:fixed;
+    top:0; right:0;
+    height:100%;
+    width:400px;
+    max-width:92vw;
+    background:var(--paper);
+    z-index:51;
+    transform:translateX(100%);
+    transition:transform .25s cubic-bezier(.4,0,.2,1);
+    display:flex;
+    flex-direction:column;
+    box-shadow:-10px 0 40px rgba(0,0,0,0.2);
+  }
+  .drawer.open{ transform:translateX(0); }
+  .drawer-head{
+    padding:22px 22px 16px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .drawer-head h3{ font-size:19px; font-weight:600; }
+  .close-btn{
+    background:none; border:none;
+    font-size:20px; color:var(--ink);
+    line-height:1;
+    padding:4px;
+  }
+  .drawer-items{
+    flex:1;
+    overflow-y:auto;
+    padding:12px 22px;
+  }
+  .cart-row{
+    display:flex;
+    gap:12px;
+    padding:14px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .cart-row .thumb{
+    width:52px; height:52px;
+    background:var(--paper-dim);
+    border-radius:4px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .cart-row .thumb svg{ width:26px; height:26px; color:var(--ink); opacity:0.8; }
+  .cart-row .info{ flex:1; min-width:0; }
+  .cart-row .info .name{
+    font-size:13.5px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:3px;
+  }
+  .cart-row .info .unit{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:#9a8a7c;
+  }
+  .qty-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-top:8px;
+  }
+  .qty-controls button{
+    width:22px; height:22px;
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:3px;
+    font-size:13px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink);
+  }
+  .qty-controls button:hover{ border-color:var(--gold); }
+  .qty-controls .n{ font-family:'JetBrains Mono', monospace; font-size:12.5px; min-width:16px; text-align:center; }
+  .remove-link{
+    background:none;border:none;
+    font-size:11px;
+    color:var(--rust);
+    text-decoration:underline;
+    padding:0;
+    margin-left:auto;
+  }
+  .row-right{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    justify-content:space-between;
+  }
+  .row-total{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink);
+  }
+  .drawer-foot{
+    padding:18px 22px 22px;
+    border-top:1px solid var(--line);
+    background:#fff;
+  }
+  .sum-line{
+    display:flex;
+    justify-content:space-between;
+    font-size:13px;
+    color:#6a5a4c;
+    padding:4px 0;
+  }
+  .sum-line.total{
+    font-size:17px;
+    font-weight:600;
+    color:var(--ink);
+    font-family:'Fraunces', serif;
+    padding-top:10px;
+    margin-top:6px;
+    border-top:1px dashed var(--line);
+  }
+  .checkout-btn{
+    width:100%;
+    margin-top:14px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    padding:14px;
+    border-radius:3px;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:0.02em;
+  }
+  .checkout-btn:hover{ background:#1c110c; }
+  .checkout-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .whatsapp-btn{ background:#25A25A; display:flex; align-items:center; justify-content:center; }
+  .whatsapp-btn:hover{ background:#1E8A4C; }
+  .telegram-btn{ background:#229ED9; display:flex; align-items:center; justify-content:center; margin-top:10px; }
+  .telegram-btn:hover{ background:#1B84B8; }
+
+  .empty-cart{
+    text-align:center;
+    padding:60px 20px;
+    color:#9a8a7c;
+  }
+  .empty-cart .glyph{ font-size:32px; margin-bottom:10px; display:block; }
+  .bilingual-msg{ display:flex; flex-direction:column; gap:4px; }
+  .bilingual-msg .amharic{
+    font-family:'Noto Sans Ethiopic', sans-serif;
+    font-size:14px;
+    color:var(--charcoal);
+  }
+  .bilingual-msg .en-msg{ font-size:12.5px; color:#9a8a7c; }
+  .ready-msg{
+    text-align:center;
+    margin-bottom:10px;
+    padding:10px 12px;
+    background:var(--paper-dim);
+    border-radius:4px;
+  }
+  .ready-msg .amharic{
+    font-family:'Noto Sans Ethiopic', sans-serif;
+    font-size:13px;
+    color:var(--ink);
+    margin-bottom:3px;
+  }
+  .ready-msg .en-msg{ font-size:11.5px; color:#8a7a6c; }
+  
+  
+
+  /* ===== Toast ===== */
+  .toast{
+    position:fixed;
+    bottom:26px; left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:var(--paper);
+    padding:13px 22px;
+    border-radius:4px;
+    font-size:13.5px;
+    opacity:0;
+    pointer-events:none;
+    transition:all .25s ease;
+    z-index:60;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    box-shadow:var(--shadow);
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .toast .dot{ width:7px;height:7px;border-radius:50%;background:var(--green); }
+
+  /* ===== Checkout modal ===== */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(43,27,20,0.5);
+    z-index:70;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+  .modal{
+    background:var(--paper);
+    border-radius:8px;
+    max-width:380px;
+    width:100%;
+    padding:36px 28px 28px;
+    text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal .check{
+    width:52px;height:52px;
+    border-radius:50%;
+    background:var(--green);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:26px;
+    margin:0 auto 18px;
+  }
+  .modal h3{ font-size:21px; margin-bottom:8px; }
+  .modal p{ font-size:13.5px; color:#7a6a5c; line-height:1.5; margin-bottom:22px; }
+  .modal .order-id{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--gold);
+    background:var(--paper-dim);
+    padding:8px 14px;
+    border-radius:4px;
+    margin-bottom:22px;
+  }
+
+  /* ===== Footer / contact ===== */
+  .delivery-note{
+    margin-top:14px;
+    font-size:13px;
+    font-weight:600;
+    color:var(--green);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .reviews-section{
+    background:var(--paper-dim);
+    padding:56px 24px;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .reviews-inner{
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .reviews-head{ text-align:center; margin-bottom:32px; }
+  .eyebrow-small{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--gold);
+  }
+  .reviews-head h2{
+    font-size:24px;
+    font-weight:600;
+    margin-top:8px;
+  }
+  .reviews-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+    gap:20px;
+  }
+  .review-card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:6px;
+    padding:20px;
+  }
+  .stars{ color:var(--gold); font-size:15px; letter-spacing:2px; margin-bottom:10px; }
+  .review-text{
+    font-size:13.5px;
+    line-height:1.55;
+    color:var(--charcoal);
+    margin-bottom:12px;
+    font-style:italic;
+  }
+  .review-author{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:#8a7a6c;
+  }
+  footer{
+    background:var(--ink);
+    color:var(--paper);
+    padding:44px 24px 30px;
+  }
+  .footer-inner{
+    max-width:1180px;
+    margin:0 auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    flex-wrap:wrap;
+    gap:32px;
+    border-bottom:1px solid rgba(248,239,224,0.14);
+    padding-bottom:28px;
+    margin-bottom:20px;
+  }
+  footer .fmark{
+    font-family:'Fraunces', serif;
+    font-size:19px;
+    margin-bottom:4px;
+  }
+  footer .famh{
+    font-family:'Noto Sans Ethiopic', sans-serif;
+    font-weight:700;
+    color:var(--gold-light);
+    font-size:14px;
+    margin-bottom:8px;
+  }
+  footer .fdesc{
+    font-size:12.5px;
+    opacity:0.65;
+    max-width:34ch;
+    line-height:1.5;
+  }
+  .contact-block h4{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--gold-light);
+    margin-bottom:12px;
+  }
+  .contact-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13.5px;
+    margin-bottom:9px;
+    text-decoration:none;
+    color:var(--paper);
+  }
+  .contact-row:hover{ color:var(--gold-light); }
+  .contact-row svg{ width:16px; height:16px; opacity:0.75; flex-shrink:0; }
+  .fsub{ text-align:center; opacity:0.5; font-family:'JetBrains Mono', monospace; font-size:11px; }
+
+  @media (max-width: 860px){
+    .hero{ grid-template-columns:1fr; padding-top:40px; }
+    .ledger-card{ transform:none; }
+    .search-wrap{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; animation:none !important; }
+  }
+
+  
+  
+  
+  
+  
+  
+
+
+  .payment-badges{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    align-items:center;
+    margin-top:12px;
+  }
+  .payment-badges .pay-logo{
+    height:28px;
+    width:auto;
+    display:block;
+    border-radius:4px;
+    box-shadow:0 1px 2px rgba(43,27,20,0.12);
+  }
+
+
+  /* ===== Weekly basket builder ===== */
+  .builder-overlay{
+    position:fixed; inset:0; background:rgba(43,27,20,0.45);
+    z-index:60; display:none; align-items:center; justify-content:center;
+    padding:16px;
+  }
+  .builder-overlay.open{ display:flex; }
+  .builder-panel{
+    background:#fff; border-radius:8px; width:min(520px,100%);
+    max-height:90vh; display:flex; flex-direction:column;
+    box-shadow:0 20px 50px rgba(43,27,20,0.25);
+    border:1px solid var(--line);
+  }
+  .builder-head{
+    padding:16px 18px; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+  }
+  .builder-head h3{ font-size:18px; margin:0; }
+  .builder-head .sub{ font-size:12px; color:#8a7a6c; margin-top:2px; }
+  .builder-body{
+    overflow-y:auto; padding:12px 16px; flex:1;
+  }
+  .builder-row{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 0; border-bottom:1px dashed var(--line);
+  }
+  .builder-row:last-child{ border-bottom:none; }
+  .builder-row .bname{ flex:1; font-size:14px; color:var(--ink); }
+  .builder-row .bunit{ font-family:'JetBrains Mono',monospace; font-size:12px; color:#8a7a6c; }
+  .builder-row .bqty{
+    display:flex; align-items:center; gap:6px;
+  }
+  .builder-row .bqty button{
+    width:28px; height:28px; border:1px solid var(--line); border-radius:4px;
+    background:#fff; font-size:16px; line-height:1; color:var(--ink);
+  }
+  .builder-row .bqty button:hover{ border-color:var(--gold); }
+  .builder-row .bqty .n{
+    min-width:22px; text-align:center;
+    font-family:'JetBrains Mono',monospace; font-size:13px;
+  }
+  .builder-foot{
+    padding:14px 18px; border-top:1px solid var(--line);
+    background:var(--paper-dim);
+  }
+  .builder-total{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:12px; font-size:15px;
+  }
+  .builder-total strong{
+    font-family:'JetBrains Mono',monospace; font-size:18px; color:var(--ink);
+  }
+  .builder-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .builder-actions .btn-primary{ flex:1; text-align:center; }
+  .builder-actions .btn-ghost{ flex:0 0 auto; }
+  .builder-hint{ font-size:11px; color:#9a8a7c; margin-top:8px; text-align:center; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>📍 Addis Ababa · We deliver city-wide · Cash on Delivery</span>
+  <a href="tel:+251919766932">📞 0919 766 932</a>
+</div>
+
+<nav>
+  <div class="nav-inner">
+    <div class="brand">
+      <span class="mark">Dejaf Tadlu</span>
+      <span class="sub amharic">ደጃፍ - ታደሉ</span>
+    </div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" placeholder="Search the marketplace…" autocomplete="off" />
+      <div class="search-suggestions" id="searchSuggestions"></div>
+    </div>
+    <div class="nav-actions">
+      <button class="cart-btn" id="cartToggle">
+        <span>Cart</span>
+        <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <div class="eyebrow">Habesha marketplace · one basket, every department</div>
+    <h1>Ethiopia's goods,<br><em>delivered</em> with care.</h1>
+    <p class="amharic hero-amharic">ከይርጋቸፌ ትኩስ ቡና፣ በባለሙያዎች የተዘጋጀ የባልትና ውጤቶች ፣ የዕለት ምግብ፣ የውበት መጠበቂያ እቃዎች እና የቤት መሠረታዊ እቃዎች — ደጃፍ ታደሉ ገበያውን ወደ ቤትዎ ያመጣል፣ በአዲስ አበባ በየትኛውም ቦታ።</p>
+    <p>Fresh Yirgacheffe coffee, expertly prepared spices & pantry goods, daily groceries, beauty care, and home basics — Dejaf Tadlu brings the market to your door, anywhere in Addis Ababa.</p>
+    <div class="hero-cta">
+      <button class="btn-primary" onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})">Browse the market</button>
+      <button class="btn-ghost" onclick="setCategory('Sale')">Today's discounts</button>
+      <button class="btn-ghost" type="button" id="openBuilderBtn">ሳምንታዊ አስቤዛ · Weekly Asbeza</button>
+      <button class="btn-ghost" type="button" id="giftsJumpBtn">Gift Packages</button>
+      <a class="btn-ghost" href="https://t.me/etc12tell4" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center;gap:7px;">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" stroke="none"><path d="M21.5 3.5L2.7 10.9c-1.2.5-1.2 1.2-.2 1.5l4.8 1.5 1.8 5.7c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.1-2 4.4 3.3c.8.5 1.4.2 1.6-.7l2.9-13.9c.3-1.2-.4-1.7-1.4-1.1zM8.4 13.5l9-5.7c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.2-1.6-4.6z"/></svg>
+        Telegram Channel
+      </a>
+    </div>
+    <div class="delivery-note">🚚 We deliver in all of Addis Ababa</div>
+  </div>
+  <div class="ledger-card">
+    <div class="head">Today's Ledger</div>
+    <div class="row"><span>Departments open</span><span id="ledgerDepts">—</span></div>
+    <div class="row"><span>Items in stock</span><span id="ledgerItems">—</span></div>
+    <div class="row"><span>On sale today</span><span id="ledgerSale">—</span></div>
+    <div class="row"><span>Avg. rating</span><span>4.8 / 5</span></div>
+  </div>
+</section>
+
+<div class="cat-rail" id="catRail"></div>
+
+<section class="packages-strip" id="packagesStrip">
+  <div class="catalog-head">
+    <h2>ሳምንታዊ አስቤዛ · Weekly Asbeza</h2>
+    <span class="count">Build your weekly basket</span>
+  </div>
+  <div class="grid packages-asbeza" id="asbezaGrid"></div>
+  <div class="catalog-head packages-gifts-head">
+    <h2>Gift Packages</h2>
+    <span class="count">Ready to wrap · under Weekly Asbeza</span>
+  </div>
+  <div class="grid" id="giftsGrid"></div>
+</section>
+
+<main class="catalog" id="catalog">
+  <div class="catalog-head">
+    <h2 id="catalogTitle">All departments</h2>
+    <span class="count" id="resultCount"></span>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label for="sortSelect">Sort</label>
+      <select id="sortSelect">
+        <option value="featured">Featured</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+        <option value="newest">Newest</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Price (ETB)</label>
+      <div class="price-range-inputs">
+        <input type="number" id="priceMinInput" placeholder="Min" min="0">
+        <span>–</span>
+        <input type="number" id="priceMaxInput" placeholder="Max" min="0">
+      </div>
+    </div>
+    <label class="sale-toggle">
+      <input type="checkbox" id="onSaleToggle">
+      <span>On sale only</span>
+    </label>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!--
+  REVIEWS: placeholder content below — swap in real customer names/quotes once
+  you have them. Presenting fabricated reviews as genuine isn't something to do,
+  so treat these as a template to fill in, not ready-to-publish text.
+-->
+<section class="reviews-section">
+  <div class="reviews-inner">
+    <div class="reviews-head">
+      <span class="eyebrow-small">What customers say</span>
+      <h2>Trusted by shoppers across Addis Ababa</h2>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"Sample review text — replace with a real customer quote about their experience."</p>
+        <div class="review-author">— Customer Name, Neighborhood</div>
+      </div>
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"Sample review text — replace with a real customer quote about their experience."</p>
+        <div class="review-author">— Customer Name, Neighborhood</div>
+      </div>
+      <div class="review-card">
+        <div class="stars">★★★★★</div>
+        <p class="review-text">"Sample review text — replace with a real customer quote about their experience."</p>
+        <div class="review-author">— Customer Name, Neighborhood</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="fmark">Dejaf Tadlu</div>
+      <div class="famh amharic">ደጃፍ - ታደሉ — የኢትዮጵያ ገበያ</div>
+      <div class="fdesc">A demo Ethiopian marketplace catalog — groceries, spices, apparel, beauty, electronics and home goods in one basket.</div>
+    </div>
+    <div class="contact-block">
+      <h4>Reach us</h4>
+      <a class="contact-row" href="tel:+251919766932">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        0919 766 932
+      </a>
+      <div class="contact-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Addis Ababa, Ethiopia
+      </div>
+      <a class="contact-row" href="https://t.me/etc12tell4" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21.5 3.5L2.7 10.9c-1.2.5-1.2 1.2-.2 1.5l4.8 1.5 1.8 5.7c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.1-2 4.4 3.3c.8.5 1.4.2 1.6-.7l2.9-13.9c.3-1.2-.4-1.7-1.4-1.1zM8.4 13.5l9-5.7c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.2-1.6-4.6z"/></svg>
+        Follow on Telegram
+      </a>
+    </div>
+  </div>
+  <div class="fsub">ETHIOPIAN MARKETPLACE · ORDERS VIA WHATSAPP OR TELEGRAM · TELEBIRR · CBE BIRR · AWASH BANK · CASH ON DELIVERY</div>
+</footer>
+
+<!-- Cart -->
+<div class="overlay" id="overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <h3>Your basket</h3>
+    <button class="close-btn" id="closeDrawer">&times;</button>
+  </div>
+  <div class="drawer-items" id="drawerItems"></div>
+  <div class="drawer-foot">
+    <div class="sum-line"><span>Subtotal</span><span id="sumSubtotal">ETB 0.00</span></div>
+    <div class="sum-line"><span>VAT (15%)</span><span id="sumTax">ETB 0.00</span></div>
+    <div class="sum-line total"><span>Total</span><span id="sumTotal">ETB 0.00</span></div>
+    <div class="ready-msg">
+      <div class="amharic">ለመዘዝ ዝግጁ ነዎት? ዋትስአፕ ወይም ቴሌግራም ይምረጡ — ትዕዛዝዎ አስቀድሞ ተሞልቷል።</div>
+      <div class="en-msg">Ready to order? Choose WhatsApp or Telegram — your order is already filled in.</div>
+    </div>
+    <button class="checkout-btn whatsapp-btn" id="checkoutBtn" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align:-4px;margin-right:7px;"><path d="M17.5 14.4c-.3-.1-1.6-.8-1.9-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.5.1-.3-.1-1.2-.4-2.2-1.4-.8-.7-1.4-1.6-1.5-1.9-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.3 0-.5 0-.1-.6-1.5-.8-2-.2-.5-.4-.4-.6-.5h-.5c-.2 0-.5.1-.7.3-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.6-.1 1.6-.7 1.9-1.3.2-.6.2-1.2.2-1.3-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.4 2 12c0 1.9.5 3.6 1.4 5.2L2 22l5-1.3c1.5.8 3.2 1.2 5 1.2 5.5 0 10-4.4 10-10S17.5 2 12 2zm0 18.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3 .8.8-2.9-.2-.3C4.2 15 3.7 13.6 3.7 12c0-4.6 3.8-8.3 8.3-8.3s8.3 3.7 8.3 8.3-3.7 8.2-8.3 8.2z"/></svg>
+      Order via WhatsApp
+    </button>
+    <button class="checkout-btn telegram-btn" id="telegramBtn" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" style="vertical-align:-4px;margin-right:7px;"><path d="M21.5 3.5L2.7 10.9c-1.2.5-1.2 1.2-.2 1.5l4.8 1.5 1.8 5.7c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.1-2 4.4 3.3c.8.5 1.4.2 1.6-.7l2.9-13.9c.3-1.2-.4-1.7-1.4-1.1zM8.4 13.5l9-5.7c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.2-1.6-4.6z"/></svg>
+      Order via Telegram
+    </button>
+    <p style="font-size:11px;color:#9a8a7c;text-align:center;margin:8px 0 0;">Opens WhatsApp or Telegram with your order filled in — just hit send.</p>
+        <div class="payment-badges" aria-label="Accepted payment methods">
+      <svg class="pay-logo" viewBox="0 0 88 28" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Telebirr">
+  <rect width="88" height="28" rx="4" fill="#00A651"/>
+  <text x="44" y="18" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#fff">Telebirr</text>
+</svg>
+      <svg class="pay-logo" viewBox="0 0 88 28" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CBE Birr">
+  <rect width="88" height="28" rx="4" fill="#0033A0"/>
+  <text x="44" y="18" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#fff">CBE Birr</text>
+</svg>
+      <svg class="pay-logo" viewBox="0 0 100 28" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Awash Bank">
+  <rect width="100" height="28" rx="4" fill="#E87722"/>
+  <text x="50" y="18" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" fill="#fff">Awash Bank</text>
+</svg>
+      <svg class="pay-logo" viewBox="0 0 120 28" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cash on Delivery">
+  <rect width="120" height="28" rx="4" fill="#5B2C6F"/>
+  <text x="60" y="18" text-anchor="middle" font-family="Inter,Arial,sans-serif" font-size="10" font-weight="700" fill="#fff">Cash on Delivery</text>
+</svg>
+    </div>
+  </div>
+</div>
+
+
+<!-- Weekly basket builder -->
+<div class="builder-overlay" id="builderOverlay" role="dialog" aria-modal="true" aria-labelledby="builderTitle">
+  <div class="builder-panel">
+    <div class="builder-head">
+      <div>
+        <h3 id="builderTitle">ሳምንታዊ አስቤዛ · Weekly Asbeza</h3>
+        <div class="sub">አትክልት እና የዕለት ፍጆታ · Vegetables & daily essentials — pick what you need · live total</div>
+      </div>
+      <button class="close-btn" id="builderClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="builder-body" id="builderBody"></div>
+    <div class="builder-foot">
+      <div class="builder-total">
+        <span>ጠቅላላ · Total</span>
+        <strong id="builderTotal">ETB 0.00</strong>
+      </div>
+      <div class="builder-actions">
+        <button class="btn-ghost" type="button" id="builderClear">አጽዳ · Clear</button>
+        <button class="btn-primary" type="button" id="builderAdd">ወደ ቅርጫት ጨምር · Add to cart</button>
+      </div>
+      <div class="builder-hint">የመረጧቸው እቃዎች ወደ ቅርጫት ይጨመራሉ · Selected items are added to your cart.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastText"></span></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="check">✓</div>
+    <h3 id="modalTitle">Order sent to WhatsApp</h3>
+    <p id="modalText">Betam ameseginalehu — your order details are ready in WhatsApp, addressed to Dejaf Tadlu. Just press send there to complete your order, and we'll confirm delivery details with you.</p>
+    <div class="order-id" id="orderId">ORDER #—</div>
+    <button class="btn-primary" style="width:100%" id="modalClose">Continue browsing</button>
+  </div>
+</div>
+
+<script>
+  // ===== Category colors + richer filled illustrations =====
+  const CATEGORY_COLORS = {
+    'Coffee & Tea':          { bg:'#E8D3A6', fg:'#5C3A21' },
+    'Home & Kitchen':        { bg:'#F0C6AE', fg:'#8C3B22' },
+    'Apparel':               { bg:'#EAD0BE', fg:'#7A3B28' },
+    'Spices & Pantry':       { bg:'#F0CE95', fg:'#A63D2F' },
+    'Jewelry':               { bg:'#EEDFAE', fg:'#8C6A1E' },
+    'Electronics':           { bg:'#D7DCDD', fg:'#2A2A2E' },
+    'Books & Paper':         { bg:'#E2D3B7', fg:'#5A4630' },
+    'Home & Garden':         { bg:'#D6E1C4', fg:'#3B5B31' },
+    'Grocery':               { bg:'#D3E1C0', fg:'#37613F' },
+    'Beauty & Cosmetics':    { bg:'#EFD4CC', fg:'#B5482A' },
+    'Electrical Equipment':  { bg:'#F3E39C', fg:'#8C6A1E' },
+    'Gift Packages':         { bg:'#EFE0EE', fg:'#7A4A78' }
+  };
+  const DEFAULT_COLOR = { bg:'#E5DAC8', fg:'#4a4038' };
+  function colorsFor(cat){ return CATEGORY_COLORS[cat] || DEFAULT_COLOR; }
+
+  const ICONS = {
+    'Coffee & Tea': `<svg viewBox="0 0 24 24"><path d="M4 9h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z" fill="currentColor" opacity=".9"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 3c0 1-1 1-1 2s1 1 1 2M12 3c0 1-1 1-1 2s1 1 1 2" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><ellipse cx="10.5" cy="9.4" rx="4.8" ry="1" fill="#fff" opacity=".35"/></svg>`,
+    'Home & Kitchen': `<svg viewBox="0 0 24 24"><path d="M6 21c-1-4-1-9 0-13a6 6 0 0 1 12 0c1 4 1 9 0 13z" fill="currentColor" opacity=".9"/><path d="M4 21h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9 4.5c0 2 6 2 6 0" fill="none" stroke="#fff" stroke-width="1.4" opacity=".5"/></svg>`,
+    'Apparel': `<svg viewBox="0 0 24 24"><path d="M8 4l4 2 4-2 4 4-3 3v11H7V11L4 8z" fill="currentColor" opacity=".9"/><path d="M7 13h10" stroke="#fff" stroke-width="1.2" opacity=".4"/></svg>`,
+    'Spices & Pantry': `<svg viewBox="0 0 24 24"><path d="M4 11h16l-1.5 8a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 11z" fill="currentColor" opacity=".9"/><path d="M8 11a4 4 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="15" r="1" fill="#fff" opacity=".5"/><circle cx="12" cy="16.5" r="1" fill="#fff" opacity=".5"/><circle cx="15" cy="15" r="1" fill="#fff" opacity=".5"/></svg>`,
+    'Jewelry': `<svg viewBox="0 0 24 24"><path d="M12 3v3" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="6" r="2.4" fill="currentColor"/><path d="M8 6a12 12 0 0 0 8 0" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M12 10l3.2 4.2-3.2 7.2-3.2-7.2L12 10z" fill="currentColor" opacity=".9"/></svg>`,
+    'Electronics': `<svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2" fill="currentColor" opacity=".9"/><rect x="7.3" y="5.3" width="9.4" height="9" rx="0.6" fill="#fff" opacity=".35"/><circle cx="12" cy="17.3" r="1" fill="#fff" opacity=".6"/></svg>`,
+    'Books & Paper': `<svg viewBox="0 0 24 24"><path d="M4 5c3-1.5 6-1.5 8 0v14c-2-1.5-5-1.5-8 0V5z" fill="currentColor" opacity=".85"/><path d="M20 5c-3-1.5-6-1.5-8 0v14c2-1.5 5-1.5 8 0V5z" fill="currentColor" opacity=".65"/></svg>`,
+    'Home & Garden': `<svg viewBox="0 0 24 24"><path d="M4 10l8-6 8 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6 10v9h12v-9z" fill="currentColor" opacity=".85"/><path d="M6 19c2-2 10-2 12 0M6 14.5c2-1.3 10-1.3 12 0" fill="none" stroke="#fff" stroke-width="1.1" opacity=".4"/></svg>`,
+    'Grocery': `<svg viewBox="0 0 24 24"><path d="M6 8h12l-1 12H7L6 8z" fill="currentColor" opacity=".9"/><path d="M9 8a3 3 0 0 1 6 0" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 8h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 4c1.2-1 2.4-1 3 0" fill="none" stroke="currentColor" stroke-width="1.3" opacity=".7"/></svg>`,
+    'Beauty & Cosmetics': `<svg viewBox="0 0 24 24"><rect x="7" y="8" width="10" height="12" rx="2" fill="currentColor" opacity=".9"/><path d="M9 8V6a3 3 0 0 1 6 0v2" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="12" width="6" height="1.6" rx="0.8" fill="#fff" opacity=".5"/></svg>`,
+    'Electrical Equipment': `<svg viewBox="0 0 24 24"><path d="M13 3L5 14h6l-1 7 8-11h-6l1-7z" fill="currentColor" opacity=".9"/></svg>`,
+    'Gift Packages': `<svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="10" rx="1" fill="currentColor" opacity=".9"/><rect x="4" y="7" width="16" height="4" rx="1" fill="currentColor" opacity=".7"/><rect x="11" y="7" width="2" height="13" fill="#fff" opacity=".4"/><path d="M8 7c-1.5 0-2.5-1-2.5-2.2S6.5 3 8 3c1.8 0 3 1.8 4 4-1 0-2.5.5-4 0zM16 7c1.5 0 2.5-1 2.5-2.2S17.5 3 16 3c-1.8 0-3 1.8-4 4 1 0 2.5.5 4 0z" fill="currentColor" opacity=".9"/></svg>`
+  };
+  const FALLBACK_ICON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>`;
+
+  // Per-item illustrations (used when a product specifies an `icon` key)
+  const ITEM_ICONS = {
+    potato: `<svg viewBox="0 0 24 24"><ellipse cx="12" cy="13" rx="8" ry="6" fill="currentColor" opacity=".9" transform="rotate(-10 12 13)"/><circle cx="9" cy="11" r=".7" fill="#fff" opacity=".5"/><circle cx="14" cy="15" r=".6" fill="#fff" opacity=".5"/><circle cx="15" cy="10" r=".5" fill="#fff" opacity=".4"/></svg>`,
+    carrot: `<svg viewBox="0 0 24 24"><path d="M12 4c2 3 3 8 1.5 13-.5 1.6-2.5 1.6-3 0C9 12 10 7 12 4z" fill="currentColor" opacity=".9"/><path d="M12 4c-1-1.2-3-1.6-4-1M12 4c1-1.2 3-1.6 4-1M12 3.2c-.6-1-1.8-1.4-2.6-1M12 3.2c.6-1 1.8-1.4 2.6-1" stroke="#3F6B4A" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>`,
+    cabbage: `<svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="currentColor" opacity=".85"/><circle cx="12" cy="13" r="5.2" fill="#fff" opacity=".18"/><circle cx="12" cy="13" r="2.6" fill="#fff" opacity=".22"/></svg>`,
+    onion: `<svg viewBox="0 0 24 24"><path d="M12 6c4 1.5 5.5 5 5 9-1 3-8 3-9 0-.6-3.5.5-7.5 4-9z" fill="currentColor" opacity=".9"/><path d="M12 6c-1-1.6-1-3-.4-4M12 6c1-1.6 1-3 .4-4" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linecap="round" opacity=".8"/></svg>`,
+    garlic: `<svg viewBox="0 0 24 24"><path d="M12 5c3.6 1.3 5 4.6 4.6 8.4C16.2 17 14.3 19 12 19s-4.2-2-4.6-5.6C7 9.6 8.4 6.3 12 5z" fill="currentColor" opacity=".85"/><path d="M12 5v14M9 7.5c1 3 1 7.5 0 10.5M15 7.5c-1 3-1 7.5 0 10.5" stroke="#fff" stroke-width="0.8" opacity=".35" fill="none"/><path d="M12 5c-.3-1.4-.1-2.6.6-3.4" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round"/></svg>`,
+    tomato: `<svg viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5" fill="currentColor" opacity=".9"/><path d="M12 6c-1.4-1.6-4-1.8-5-.6 1.6.2 2.6 1 3.2 2M12 6c1.4-1.6 4-1.8 5-.6-1.6.2-2.6 1-3.2 2M12 6v1.2" fill="none" stroke="#3F6B4A" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+    oil: `<svg viewBox="0 0 24 24"><path d="M10 3h4v3l2 2v12a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8l2-2V3z" fill="currentColor" opacity=".9"/><rect x="9.3" y="11" width="5.4" height="7" fill="#fff" opacity=".25"/></svg>`,
+    coffeeRoasted: `<svg viewBox="0 0 24 24"><ellipse cx="9" cy="10" rx="3.4" ry="4.4" fill="currentColor" opacity=".9" transform="rotate(-20 9 10)"/><ellipse cx="15" cy="14" rx="3.4" ry="4.4" fill="currentColor" opacity=".75" transform="rotate(20 15 14)"/><path d="M9 6.5v7M15 10v7" stroke="#fff" stroke-width="0.9" opacity=".4"/></svg>`,
+    coffeeGround: `<svg viewBox="0 0 24 24"><path d="M4 11h16l-1.5 8a2 2 0 0 1-2 1.7H7.5a2 2 0 0 1-2-1.7L4 11z" fill="currentColor" opacity=".9"/><path d="M8 11a4 4 0 0 1 8 0" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 14h8M8.6 16.4h6.8" stroke="#fff" stroke-width="0.8" opacity=".3"/></svg>`
+  };
+  // Optional per-item color overrides (falls back to the category color)
+  const ITEM_COLORS = {
+    potato: { bg:'#E8DCC4', fg:'#7A5C3A' },
+    carrot: { bg:'#F6D9B8', fg:'#C96A1F' },
+    cabbage: { bg:'#D7E6C6', fg:'#4C7A3A' },
+    onion: { bg:'#EDE0EC', fg:'#7A4A78' },
+    garlic: { bg:'#F3EFE3', fg:'#8C7A50' },
+    tomato: { bg:'#F5D2C8', fg:'#B5382A' },
+    oil: { bg:'#F3E7A8', fg:'#8C6A1E' },
+    coffeeRoasted: { bg:'#DDC9A6', fg:'#4A2E18' },
+    coffeeGround: { bg:'#D8C4A0', fg:'#3A2414' }
+  };
+  function iconForProduct(p){
+    const svg = (p.icon && ITEM_ICONS[p.icon]) || ICONS[p.cat] || FALLBACK_ICON;
+    const c = (p.icon && ITEM_COLORS[p.icon]) || colorsFor(p.cat);
+    return `<span class="icon-badge" style="background:${c.bg};color:${c.fg}">${svg}</span>`;
+  }
+  // Renders a real product photo on top of the icon badge when `img` is set.
+  // If the photo ever fails to load, it hides itself and the badge underneath still shows.
+  function jpegFallback(src){
+    if(!src) return '';
+    return src.endsWith('.webp') ? src.slice(0, -5) + '.jpg' : src;
+  }
+  function escapeAttr(s){
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+  // Meaningful alt text for accessibility + SEO
+  function altForProduct(p, angle){
+    const name = (p.name || 'Product').trim();
+    const cat = (p.cat || '').trim();
+    let base;
+    if(p.builder){
+      base = name + ' — weekly vegetable and grocery basket from Dejaf Tadlu market, Addis Ababa';
+    } else if(cat === 'Gift Packages'){
+      base = name + ' — gift package from Dejaf Tadlu, ready to wrap';
+    } else if(cat){
+      base = name + ' — ' + cat + ' product from Dejaf Tadlu';
+    } else {
+      base = name + ' from Dejaf Tadlu';
+    }
+    if(p.sale != null) base += ' (on sale)';
+    if(angle === 2) base += ' (alternate view)';
+    else if(angle === 1 && p.img2) base += ' (main view)';
+    return escapeAttr(base);
+  }
+  function pictureTag(src, alt, extraClass, load, fetchPri){
+    const jpg = jpegFallback(src);
+    const cls = extraClass ? ` class="${extraClass}"` : '';
+    const fp = fetchPri || '';
+    // WebP first, JPEG fallback for older browsers
+    return `<picture>
+      <source srcset="${src}" type="image/webp">
+      <img src="${jpg}" alt="${alt}" width="400" height="300" loading="${load}" decoding="async"${fp}${cls} draggable="false" onerror="this.closest('picture')?this.closest('picture').style.display='none':this.style.display='none'">
+    </picture>`;
+  }
+  function mediaFor(p){
+    const badge = iconForProduct(p);
+    // Above-the-fold packages load sooner; catalog cards stay lazy
+    const eager = !!(p.builder || p.cat === 'Gift Packages');
+    const load = eager ? 'eager' : 'lazy';
+    const fetchPri = eager ? ' fetchpriority="high"' : '';
+    if(p.img && p.img2){
+      return `<div class="photo-duo">
+        ${pictureTag(p.img, altForProduct(p, 1), '', load, fetchPri)}
+        ${pictureTag(p.img2, altForProduct(p, 2), '', 'lazy', '')}
+      </div>${badge}`;
+    }
+    if(p.img){
+      return pictureTag(p.img, altForProduct(p), 'real-photo', load, fetchPri) + badge;
+    }
+    return badge;
+  }
+  function iconFor(cat){
+    const c = colorsFor(cat);
+    const svg = ICONS[cat] || FALLBACK_ICON;
+    return `<span class="icon-badge" style="background:${c.bg};color:${c.fg}">${svg}</span>`;
+  }
+  function rawIconFor(cat){ return ICONS[cat] || FALLBACK_ICON; }
+
+  // ===== Product data =====
+  const PRODUCTS = [
+    // Coffee & Tea
+    { id:1, name:'Yirgacheffe Coffee Beans, 250g', cat:'Coffee & Tea', price:380, sale:null, img:'p1-yirgacheffe-coffee-beans.webp', desc:'Single-origin beans from the Gedeo highlands, medium roast.' },
+    { id:18, name:'Coffee Ceremony Tray Set', cat:'Coffee & Tea', price:980, sale:null, desc:'Wooden tray with cups, incense holder, and popcorn bowl.' },
+    { id:36, name:'Roasted Coffee Beans (የተቆላ ቡና), 250g', cat:'Coffee & Tea', price:400, sale:null, icon:'coffeeRoasted', img:'p36-roasted-coffee-beans.webp', desc:'Whole beans, freshly roasted, ready to grind at home.' },
+    { id:37, name:'Ground Coffee (የተፈጨ ቡና), 250g', cat:'Coffee & Tea', price:420, sale:null, icon:'coffeeGround', img:'p37-ground-coffee.webp', desc:'Finely ground and ready to brew, no grinder needed.' },
+    // Home & Kitchen
+    { id:2, name:'Traditional Clay Jebena', cat:'Home & Kitchen', price:650, sale:550, desc:'Hand-formed clay coffee pot for the buna ceremony.' },
+    { id:10, name:'Electric Injera Mitad', cat:'Home & Kitchen', price:3200, sale:null, img:'p10-electric-injera-mitad.webp', desc:'Non-stick electric griddle, thermostat controlled.' },
+    // Apparel
+    { id:3, name:'Habesha Kemis, Hand-Embroidered', cat:'Apparel', price:2200, sale:null, desc:'Traditional cotton dress with tilet border embroidery.' },
+    { id:6, name:'Handwoven Shemma Scarf', cat:'Apparel', price:480, sale:null, desc:'Cotton scarf woven on a traditional handloom.' },
+    { id:11, name:'Handmade Leather Sandals', cat:'Apparel', price:620, sale:null, desc:'Full-grain leather, stitched by hand in Addis Ababa.' },
+    { id:15, name:'Habesha Netela, Cotton Shawl', cat:'Apparel', price:900, sale:null, desc:'Lightweight handwoven shawl with tilet trim.' },
+    // Spices & Pantry
+    { id:4, name:'Berbere Spice Blend (በርበሬ), 200g', cat:'Spices & Pantry', price:150, sale:null, img:'p4-berbere-spice-blend.webp', desc:'House-ground chili blend for doro wat and beyond.' },
+    { id:5, name:'Mitmita Spice Blend, 150g', cat:'Spices & Pantry', price:140, sale:null, img:'p5-mitmita-spice-blend.webp', desc:"Fiery bird's-eye chili blend, finely ground." },
+    // Jewelry
+    { id:7, name:'Ethiopian Cross Necklace, Silver', cat:'Jewelry', price:950, sale:800, img:'p7-ethiopian-cross-necklace.webp', desc:'Handcrafted Lalibela-style cross on a fine silver chain.' },
+    // Electronics
+    { id:9, name:'Wireless Earbuds', cat:'Electronics', price:2600, sale:2100, img:'p9-wireless-earbuds.webp', desc:'18-hour battery life with a compact charging case.' },
+    { id:16, name:'USB-C Fast Charger, 20W', cat:'Electronics', price:750, sale:null, img:'p16-usb-c-fast-charger.webp', desc:'Compact wall charger, compatible with most phones.' },
+    // Books & Paper
+    { id:13, name:"Amharic Children's Storybook Set", cat:'Books & Paper', price:260, sale:null, desc:'Three illustrated folktales, printed in Amharic.' },
+    // Home & Garden
+    { id:14, name:'Frankincense & Myrrh Set', cat:'Home & Garden', price:180, sale:null, desc:'Ethiopian etan resin with a traditional clay burner.' },
+    { id:17, name:'Woven Mesob Basket', cat:'Home & Garden', price:1400, sale:1150, desc:'Handwoven grass basket-table for serving injera.' },
+    // Grocery
+    { id:19, name:'Teff Flour, 5kg', cat:'Grocery', price:620, sale:null, img:'p19-teff-flour.webp', desc:'Whole-grain teff, stone-milled for authentic injera.' },
+    { id:20, name:'Fresh Avocados, 1kg Bag', cat:'Grocery', price:110, sale:null, img:'p20-fresh-avocados.webp', desc:'Locally grown, ready to eat within a day or two.' },
+    { id:21, name:'Shiro Powder (ሽሮ), 500g', cat:'Grocery', price:170, sale:null, img:'p21-shiro-powder.webp', desc:'Roasted chickpea flour blend, ready for shiro wat.' },
+    { id:22, name:'Ethiopian Kibe Butter, 250g', cat:'Grocery', price:210, sale:190, desc:'Spiced clarified butter for traditional dishes.' },
+    { id:29, name:'Potatoes (ድንች), 1kg', cat:'Grocery', price:45, sale:null, icon:'potato', desc:'Fresh table potatoes, good for wot or frying.' },
+    { id:30, name:'Carrots (ካሮት), 1kg', cat:'Grocery', price:55, sale:null, icon:'carrot', img:'p30-carrots.webp', desc:'Crisp, sweet carrots for stews and salads.' },
+    { id:31, name:'Cabbage (ጎመን), 1 head', cat:'Grocery', price:40, sale:null, icon:'cabbage', desc:'Fresh green cabbage for atkilt and sides.' },
+    { id:32, name:'Onions (ሽንኩርት), 1kg', cat:'Grocery', price:65, sale:null, icon:'onion', desc:'Everyday red onions, the base of most wats.' },
+    { id:33, name:'Garlic (ነጭ ሽንኩርት), 250g', cat:'Grocery', price:90, sale:null, icon:'garlic', desc:'Fresh garlic bulbs, sold by the net.' },
+    { id:34, name:'Tomatoes (ቲማቲም), 1kg', cat:'Grocery', price:70, sale:60, icon:'tomato', desc:'Ripe, ready to cook or slice fresh.' },
+    { id:35, name:'Cooking Oil (ዘይት), 1L', cat:'Grocery', price:260, sale:null, icon:'oil', desc:'All-purpose vegetable oil for everyday cooking.' },
+    // Beauty & Cosmetics
+    { id:23, name:'Shea Butter Body Cream', cat:'Beauty & Cosmetics', price:240, sale:null, desc:'Whipped shea butter, unscented, for dry skin.' },
+    { id:24, name:'Natural Henna Powder, 100g', cat:'Beauty & Cosmetics', price:130, sale:null, desc:'Pure henna leaf powder for hair and skin art.' },
+    { id:25, name:'Matte Lipstick Set', cat:'Beauty & Cosmetics', price:390, sale:320, desc:'Three long-wear shades in a compact travel case.' },
+    // Electrical Equipment
+    { id:26, name:'Voltage Stabilizer, 1000VA', cat:'Electrical Equipment', price:1850, sale:null, desc:"Protects appliances from Addis Ababa's voltage swings." },
+    { id:27, name:'LED Bulb Pack, 4 x 9W', cat:'Electrical Equipment', price:340, sale:null, desc:'Energy-saving daylight bulbs, standard E27 base.' },
+    { id:28, name:'Rechargeable Emergency Lamp', cat:'Electrical Equipment', price:590, sale:480, desc:'Backup lighting with a 6-hour runtime, USB charging.' },
+    { id:38, name:'Kids Pajama Set, Assorted Prints', cat:'Apparel', price:480, sale:null, img:'p38-kids-pajama-set.webp', desc:'Soft cotton pajama sets for kids, mixed cartoon prints, sizes vary.' },
+    { id:39, name:'Kids Pajama Pants, Assorted Prints', cat:'Apparel', price:260, sale:null, img:'p39-kids-pajama-pants.webp', desc:'Cotton pajama bottoms only, playful prints, elastic waist.' },
+    { id:40, name:'Girls Leggings, Navy & Lilac', cat:'Apparel', price:320, sale:null, img:'p40-girls-leggings.webp', desc:'Soft stretch leggings with a contrast side stripe.' },
+    { id:41, name:'Eau de Parfum, For Women', cat:'Beauty & Cosmetics', price:950, sale:null, img:'p41-eau-de-parfum.webp', desc:'Elegant floral fragrance in a gold-capped bottle.' },
+    { id:42, name:'Eau de Parfum, For Men, 50ml', cat:'Beauty & Cosmetics', price:850, sale:null, img:'p42-eau-de-parfum.webp', desc:'Bold, modern scent in a compact 50ml bottle.' },
+    { id:43, name:'Men\'s Pullover Hoodie', cat:'Apparel', price:900, sale:null, img:'p43-men-s-pullover-hoodie.webp', desc:'Fleece-lined hoodie, available in several colors.' },
+    { id:44, name:'Men\'s Pique Polo Shirt', cat:'Apparel', price:650, sale:null, img:'p44-men-s-pique-polo-shirt.webp', desc:'Classic-fit cotton pique polo, available in several colors.' },
+    { id:45, name:'Men\'s Boxer Shorts, Assorted Patterns (6-Pack)', cat:'Apparel', price:780, sale:null, img:'p45-men-s-boxer-shorts.webp', desc:'Soft cotton boxers, mixed prints and sizes.' },
+    // Featured packages (Asbeza first, then gifts directly under it)
+    { id:49, name:'ሳምንታዊ አስቤዛ · Weekly Asbeza', cat:'Grocery', price:950, sale:null, builder:true, img:'weekly-asbeza.webp', desc:'ሳምንታዊ አስቤዛ — አትክልት እና የዕለት ፍጆታ በእርስዎ ምርጫ። Weekly Asbeza — build your vegetable & staples basket; total updates live.' },
+    { id:46, name:'Executive Gift Box', cat:'Gift Packages', price:1800, sale:null, img:'gift-46a.webp', img2:'gift-46b.webp', desc:'Premium set: flask, notebook and pen — two looks, gift-wrapped and ready to give. Custom name available.' },
+    { id:47, name:'Birthday Gift Box', cat:'Gift Packages', price:2100, sale:null, img:'gift-47a.webp', img2:'gift-47b.webp', desc:'Birthday set: notebook, thermos/bottle, mug and cards — two styles shown. Custom name available.' },
+    { id:48, name:'Celebration Gift Box', cat:'Gift Packages', price:1950, sale:null, img:'gift-48a.webp', desc:'Celebration box: notebook, thermos and mug — wrapped with love. Custom name available. (Send a 2nd photo to show two angles.)' },
+    // Staples (individual items)
+    { id:50, name:'Beso (በሶ), 1kg', cat:'Grocery', price:180, sale:null, desc:'Roasted barley flour — classic Ethiopian breakfast and snack staple.' },
+    { id:51, name:'Aja (አጃ), 1kg', cat:'Grocery', price:160, sale:null, desc:'Barley grain for porridge, kinche, or home milling.' },
+    { id:52, name:'Rice (ሩዝ), 1kg', cat:'Grocery', price:220, sale:null, desc:'Everyday white rice for family meals.' },
+    { id:53, name:'Qinche (ቅንጨ), 1kg', cat:'Grocery', price:170, sale:null, desc:'Cracked barley / qinche — ready for traditional porridge.' },
+    { id:54, name:'Difen Misir (ድፍን ምስር), 1kg', cat:'Grocery', price:200, sale:null, desc:'Whole red lentils for shiro, stews, and soups.' },
+    { id:55, name:'Split Misir (ምስር ክክ), 1kg', cat:'Grocery', price:210, sale:null, desc:'Split red lentils — cooks faster for everyday misir wot.' },
+    { id:56, name:'Split Ater (አተር ክክ), 1kg', cat:'Grocery', price:190, sale:null, desc:'Split peas for ater kik wot and hearty stews.' },
+    { id:57, name:'Peanut Butter (የለውዝ ቅቤ), 500g', cat:'Grocery', price:280, sale:null, desc:'Smooth peanut butter for bread, snacks, and cooking.' },
+
+  ];
+
+  const CATEGORIES = [
+    'All',
+    'Grocery',
+    'Gift Packages',
+    ...Array.from(new Set(PRODUCTS.map(p=>p.cat))).filter(c => c !== 'Grocery' && c !== 'Gift Packages')
+  ];
+
+  // ===== State =====
+  let activeCategory = 'All';
+  let searchTerm = '';
+  let sortMode = 'featured';
+  let priceMin = null;
+  let priceMax = null;
+  let onSaleOnly = false;
+  let cart = {}; // id -> qty
+
+  // ===== Render category rail =====
+  const catRail = document.getElementById('catRail');
+  function renderCats(){
+    catRail.innerHTML = '';
+    CATEGORIES.forEach(cat=>{
+      const chip = document.createElement('button');
+      chip.className = 'cat-chip' + (cat === activeCategory ? ' active' : '');
+      chip.innerHTML = (cat !== 'All' ? rawIconFor(cat) : '') + `<span>${cat}</span>`;
+      chip.onclick = () => setCategory(cat);
+      catRail.appendChild(chip);
+    });
+  }
+  function setCategory(cat){
+    activeCategory = cat;
+    renderCats();
+    renderGrid();
+  }
+
+  // ===== Render grid =====
+  const grid = document.getElementById('grid');
+  const catalogTitle = document.getElementById('catalogTitle');
+  const resultCount = document.getElementById('resultCount');
+
+  function formatETB(n){
+    return 'ETB ' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function getFiltered(){
+    let items = PRODUCTS.filter(p=>{
+      const matchesCat = activeCategory === 'All' || (activeCategory === 'Sale' ? p.sale : p.cat === activeCategory);
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm) || p.desc.toLowerCase().includes(searchTerm);
+      const price = p.sale || p.price;
+      const matchesMin = priceMin === null || price >= priceMin;
+      const matchesMax = priceMax === null || price <= priceMax;
+      const matchesSale = !onSaleOnly || !!p.sale;
+      return matchesCat && matchesSearch && matchesMin && matchesMax && matchesSale;
+    });
+    return sortItems(items);
+  }
+
+  function sortItems(items){
+    const sorted = items.slice();
+    if(sortMode === 'price-low'){
+      sorted.sort((a,b) => (a.sale||a.price) - (b.sale||b.price));
+    } else if(sortMode === 'price-high'){
+      sorted.sort((a,b) => (b.sale||b.price) - (a.sale||a.price));
+    } else if(sortMode === 'newest'){
+      sorted.sort((a,b) => b.id - a.id);
+    } else {
+      // Featured: Weekly Asbeza first, Gift Packages directly under it, then the rest
+      const rank = (p) => p.builder ? 0 : (p.cat === 'Gift Packages' ? 1 : 2);
+      sorted.sort((a,b) => rank(a) - rank(b) || a.id - b.id);
+    }
+    return sorted;
+  }
+
+  function showPackagesStrip(){
+    return activeCategory === 'All' && !searchTerm && !onSaleOnly && sortMode === 'featured' && priceMin === null && priceMax === null;
+  }
+
+  function cardHTML(p){
+    const qtyInCart = cart[p.id] || 0;
+    const footerControl = qtyInCart > 0
+      ? `<div class="card-stepper" data-id="${p.id}">
+           <button class="card-step-btn" data-action="dec">−</button>
+           <span class="card-step-qty">${qtyInCart}</span>
+           <button class="card-step-btn" data-action="inc">+</button>
+         </div>`
+      : `<button class="add-btn" data-id="${p.id}">${p.builder ? 'Build basket' : 'Add'}</button>`;
+    return `
+      <div class="card-img${p.img && p.img2 ? ' has-duo' : ''}">
+        ${p.sale ? '<span class="sale-badge">SALE</span>' : ''}
+        <span class="tag-hole"></span>
+        ${mediaFor(p)}
+      </div>
+      <div class="card-body">
+        <span class="card-cat">${p.cat}</span>
+        <span class="card-name">${p.name}</span>
+        <span class="card-desc">${p.desc}</span>
+        <div class="card-footer">
+          <span class="price">${p.sale ? `<span class="strike">${formatETB(p.price)}</span>${formatETB(p.sale)}` : (p.builder ? 'From your picks' : formatETB(p.price))}</span>
+          ${footerControl}
+        </div>
+      </div>
+    `;
+  }
+
+  function bindCardControls(root){
+    root.querySelectorAll('.add-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const id = Number(e.currentTarget.dataset.id);
+        addToCart(id);
+      });
+    });
+    root.querySelectorAll('.card-stepper').forEach(stepper=>{
+      const id = Number(stepper.dataset.id);
+      stepper.querySelectorAll('.card-step-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const action = e.currentTarget.dataset.action;
+          changeQty(id, action === 'inc' ? 1 : -1);
+        });
+      });
+    });
+  }
+
+  function renderPackages(){
+    const strip = document.getElementById('packagesStrip');
+    const asbezaGrid = document.getElementById('asbezaGrid');
+    const giftsGrid = document.getElementById('giftsGrid');
+    if(!strip) return;
+    if(!showPackagesStrip()){
+      strip.classList.add('hidden');
+      asbezaGrid.innerHTML = '';
+      giftsGrid.innerHTML = '';
+      return;
+    }
+    strip.classList.remove('hidden');
+    const asbeza = PRODUCTS.filter(p => p.builder);
+    const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
+    asbezaGrid.innerHTML = '';
+    giftsGrid.innerHTML = '';
+    asbeza.forEach(p=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = cardHTML(p);
+      asbezaGrid.appendChild(card);
+    });
+    gifts.forEach(p=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = cardHTML(p);
+      giftsGrid.appendChild(card);
+    });
+    bindCardControls(strip);
+  }
+
+  function renderGrid(){
+    let items = getFiltered();
+    if(showPackagesStrip()){
+      items = items.filter(p => !p.builder && p.cat !== 'Gift Packages');
+    }
+    catalogTitle.textContent = activeCategory === 'All' ? 'All departments' : activeCategory;
+    resultCount.textContent = items.length + (items.length === 1 ? ' item' : ' items');
+    grid.innerHTML = '';
+    renderPackages();
+
+    if(items.length === 0){
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="glyph">🔍</div>
+        <div>Nothing on the shelf matches that search.</div>
+      </div>`;
+      return;
+    }
+
+    items.forEach(p=>{
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = cardHTML(p);
+      grid.appendChild(card);
+    });
+
+    bindCardControls(grid);
+  }
+
+  // ===== Search =====
+  const searchSuggestions = document.getElementById('searchSuggestions');
+
+  function updateSearchSuggestions(term){
+    if(!term){
+      searchSuggestions.classList.remove('open');
+      searchSuggestions.innerHTML = '';
+      return;
+    }
+    const matches = PRODUCTS.filter(p => p.name.toLowerCase().includes(term)).slice(0, 5);
+    if(matches.length === 0){
+      searchSuggestions.classList.remove('open');
+      searchSuggestions.innerHTML = '';
+      return;
+    }
+    searchSuggestions.innerHTML = matches.map(p => `
+      <div class="suggestion-item" data-id="${p.id}">
+        <span class="sname">${p.name}</span>
+        <span class="sprice">${formatETB(p.sale || p.price)}</span>
+      </div>
+    `).join('');
+    searchSuggestions.classList.add('open');
+
+    searchSuggestions.querySelectorAll('.suggestion-item').forEach(item=>{
+      item.addEventListener('click', ()=>{
+        const p = PRODUCTS.find(x => x.id === Number(item.dataset.id));
+        document.getElementById('searchInput').value = p.name;
+        searchTerm = p.name.toLowerCase();
+        searchSuggestions.classList.remove('open');
+        activeCategory = 'All';
+        renderCats();
+        renderGrid();
+        document.getElementById('catalog').scrollIntoView({behavior:'smooth'});
+      });
+    });
+  }
+
+  document.getElementById('searchInput').addEventListener('input', (e)=>{
+    searchTerm = e.target.value.trim().toLowerCase();
+    updateSearchSuggestions(searchTerm);
+    renderGrid();
+  });
+  document.getElementById('searchInput').addEventListener('blur', ()=>{
+    setTimeout(()=> searchSuggestions.classList.remove('open'), 150); // allow click to register first
+  });
+  document.getElementById('searchInput').addEventListener('focus', (e)=>{
+    if(e.target.value.trim()) updateSearchSuggestions(searchTerm);
+  });
+
+  // ===== Filters & sort =====
+  document.getElementById('sortSelect').addEventListener('change', (e)=>{
+    sortMode = e.target.value;
+    renderGrid();
+  });
+  document.getElementById('priceMinInput').addEventListener('input', (e)=>{
+    priceMin = e.target.value === '' ? null : Number(e.target.value);
+    renderGrid();
+  });
+  document.getElementById('priceMaxInput').addEventListener('input', (e)=>{
+    priceMax = e.target.value === '' ? null : Number(e.target.value);
+    renderGrid();
+  });
+  document.getElementById('onSaleToggle').addEventListener('change', (e)=>{
+    onSaleOnly = e.target.checked;
+    renderGrid();
+  });
+
+  // ===== Cart logic =====
+  function addToCart(id){
+    const p = PRODUCTS.find(x=>x.id===id);
+    if(p && p.builder){
+      openBuilder();
+      return;
+    }
+    cart[id] = (cart[id] || 0) + 1;
+    updateCartUI();
+    showToast(`${p ? p.name : 'Item'} added to basket`);
+  }
+  function changeQty(id, delta){
+    if(!cart[id]) return;
+    cart[id] += delta;
+    if(cart[id] <= 0) delete cart[id];
+    updateCartUI();
+  }
+  function removeFromCart(id){
+    delete cart[id];
+    updateCartUI();
+  }
+
+  function cartEntries(){
+    return Object.entries(cart).map(([id, qty])=>{
+      const p = PRODUCTS.find(x=>x.id === Number(id));
+      const unit = p.sale || p.price;
+      return { ...p, qty, unit, lineTotal: unit * qty };
+    });
+  }
+
+  function updateCartUI(){
+    const entries = cartEntries();
+    const totalCount = entries.reduce((s,e)=>s+e.qty, 0);
+    document.getElementById('cartCount').textContent = totalCount;
+
+    const drawerItems = document.getElementById('drawerItems');
+    const checkoutBtn = document.getElementById('checkoutBtn');
+    const telegramBtn = document.getElementById('telegramBtn');
+
+    if(entries.length === 0){
+      drawerItems.innerHTML = `<div class="empty-cart">
+        <span class="glyph">🧺</span>
+        <div class="bilingual-msg">
+          <div class="amharic">ቅርጫትዎ ባዶ ነው። ግዢ ጀምረው በጥሩ እቃዎች ይሙሉት!</div>
+          <div class="en-msg">Your basket is empty. Start shopping and fill it with great products!</div>
+        </div>
+      </div>`;
+      checkoutBtn.disabled = true;
+      telegramBtn.disabled = true;
+    }else{
+      checkoutBtn.disabled = false;
+      telegramBtn.disabled = false;
+      drawerItems.innerHTML = entries.map(e => `
+        <div class="cart-row" data-id="${e.id}">
+          <div class="thumb">${mediaFor(e)}</div>
+          <div class="info">
+            <div class="name">${e.name}</div>
+            <div class="unit">${formatETB(e.unit)} each</div>
+            <div class="qty-controls">
+              <button class="qty-dec">−</button>
+              <span class="n">${e.qty}</span>
+              <button class="qty-inc">+</button>
+              <button class="remove-link">Remove</button>
+            </div>
+          </div>
+          <div class="row-right">
+            <span class="row-total">${formatETB(e.lineTotal)}</span>
+          </div>
+        </div>
+      `).join('');
+
+      drawerItems.querySelectorAll('.cart-row').forEach(row=>{
+        const id = Number(row.dataset.id);
+        row.querySelector('.qty-inc').onclick = () => changeQty(id, 1);
+        row.querySelector('.qty-dec').onclick = () => changeQty(id, -1);
+        row.querySelector('.remove-link').onclick = () => removeFromCart(id);
+      });
+    }
+
+    const subtotal = entries.reduce((s,e)=>s+e.lineTotal, 0);
+    const tax = subtotal * 0.15;
+    const total = subtotal + tax;
+    document.getElementById('sumSubtotal').textContent = formatETB(subtotal);
+    document.getElementById('sumTax').textContent = formatETB(tax);
+    document.getElementById('sumTotal').textContent = formatETB(total);
+
+    renderGrid(); // refresh "Added" state on cards
+  }
+
+  // ===== Drawer open/close =====
+  const overlay = document.getElementById('overlay');
+  const drawer = document.getElementById('drawer');
+  function openDrawer(){ overlay.classList.add('open'); drawer.classList.add('open'); }
+  function closeDrawer(){ overlay.classList.remove('open'); drawer.classList.remove('open'); }
+  document.getElementById('cartToggle').onclick = openDrawer;
+  document.getElementById('closeDrawer').onclick = closeDrawer;
+  overlay.onclick = closeDrawer;
+
+  // ===== Toast =====
+  let toastTimer;
+  function showToast(msg){
+    const toast = document.getElementById('toast');
+    document.getElementById('toastText').textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toast.classList.remove('show'), 1800);
+  }
+
+  // ===== Checkout via WhatsApp =====
+  const WHATSAPP_NUMBER = '251919766932'; // 0919 766 932 in international format, no leading 0 or +
+  const modalOverlay = document.getElementById('modalOverlay');
+
+  // Mirrors WhatsApp orders to Telegram too, so every order lands in one inbox.
+  // Fill these in once the bot is deployed with a public URL — leave BOT_NOTIFY_URL
+  // blank to disable this (WhatsApp ordering still works fine either way).
+  const BOT_NOTIFY_URL = ''; // e.g. 'https://your-app.up.railway.app/notify/website-order'
+  const BOT_NOTIFY_SECRET = ''; // must match WEBSITE_NOTIFY_SECRET set on the bot
+
+  function mirrorOrderToTelegram(){
+    if(!BOT_NOTIFY_URL) return; // not configured yet — silently skip
+    const entries = cartEntries();
+    const subtotal = entries.reduce((s,e)=>s+e.lineTotal, 0);
+    const vat = subtotal * 0.15;
+    const total = subtotal + vat;
+    const body = JSON.stringify({
+      items: entries.map(e => ({ name: e.name, qty: e.qty, lineTotal: e.lineTotal })),
+      subtotal, vat, total,
+    });
+    try {
+      fetch(BOT_NOTIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Notify-Secret': BOT_NOTIFY_SECRET },
+        body,
+        keepalive: true, // lets the request finish even as the page navigates to WhatsApp
+      }).catch(() => { /* best-effort only — WhatsApp message is still the real order */ });
+    } catch (e) { /* never let this block the actual checkout */ }
+  }
+
+  function buildWhatsAppMessage(orderNum){
+    const entries = cartEntries();
+    const subtotal = entries.reduce((s,e)=>s+e.lineTotal, 0);
+    const tax = subtotal * 0.15;
+    const total = subtotal + tax;
+
+    let msg = `New order from Dejaf Tadlu (ደጃፍ - ታደሉ) website\n`;
+    msg += `Order #${orderNum}\n\n`;
+    entries.forEach((e, i)=>{
+      msg += `${i+1}. ${e.name} x${e.qty} — ${formatETB(e.lineTotal)}\n`;
+    });
+    msg += `\nSubtotal: ${formatETB(subtotal)}\n`;
+    msg += `VAT (15%): ${formatETB(tax)}\n`;
+    msg += `Total: ${formatETB(total)}\n\n`;
+    msg += `Delivery address: (please fill in)\n`;
+    msg += `Name: (please fill in)`;
+    return msg;
+  }
+
+  document.getElementById('checkoutBtn').onclick = () => {
+    if(Object.keys(cart).length === 0) return;
+    const orderNum = 'DJT-' + Math.floor(10000 + Math.random()*89999);
+    const message = buildWhatsAppMessage(orderNum);
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    mirrorOrderToTelegram();
+    window.open(waUrl, '_blank');
+    document.getElementById('modalTitle').textContent = 'Order sent to WhatsApp';
+    document.getElementById('modalText').textContent = "Betam ameseginalehu — your order details are ready in WhatsApp, addressed to Dejaf Tadlu. Just press send there to complete your order, and we'll confirm delivery details with you.";
+    document.getElementById('orderId').textContent = 'ORDER #' + orderNum;
+    modalOverlay.classList.add('open');
+  };
+
+  const TELEGRAM_BOT_USERNAME = 'Tadeluonlineshoppingbot';
+
+  document.getElementById('telegramBtn').onclick = () => {
+    if(Object.keys(cart).length === 0) return;
+
+    // Encode cart as "id_qty-id_qty-..." — Telegram's /start payload only allows
+    // letters, numbers, underscore and hyphen, and max 64 characters.
+    const entries = Object.entries(cart); // [ [id, qty], ... ]
+    let parts = entries.map(([id, qty]) => `${id}_${qty}`);
+    let payload = parts.join('-');
+    let trimmed = false;
+    while(payload.length > 64 && parts.length > 0){
+      parts.pop();
+      payload = parts.join('-');
+      trimmed = true;
+    }
+
+    const url = payload
+      ? `https://t.me/${TELEGRAM_BOT_USERNAME}?start=${payload}`
+      : `https://t.me/${TELEGRAM_BOT_USERNAME}`;
+    window.open(url, '_blank');
+
+    document.getElementById('modalTitle').textContent = 'Order sent to Telegram';
+    document.getElementById('modalText').textContent = trimmed
+      ? "Betam ameseginalehu — your cart opened in Telegram, but it had too many items to fit in the link, so only some made it in automatically. Please add any missing items in the chat, then checkout there."
+      : "Betam ameseginalehu — your cart opened in Telegram. Just confirm your name and address there to complete your order.";
+    document.getElementById('orderId').textContent = '';
+    modalOverlay.classList.add('open');
+  };
+  document.getElementById('modalClose').onclick = () => {
+    modalOverlay.classList.remove('open');
+    cart = {};
+    updateCartUI();
+    closeDrawer();
+  };
+
+
+  // ===== Weekly basket builder =====
+  // Product ids used in the builder (vegetables + key staples already in catalog)
+  const BUILDER_IDS = [
+    // Prefer vegetable-ish / daily produce if present; fall back by name match
+  ];
+
+  function builderCatalog(){
+    // Collect grocery items suitable for a weekly basket (vegetables + staples)
+    const prefer = [
+      'Tomatoes', 'Onions', 'Potatoes', 'Garlic',
+      'Beso', 'Aja', 'Rice', 'Qinche',
+      'Difen Misir', 'Split Misir', 'Split Ater', 'Peanut Butter',
+      'Cooking Oil', 'ቲማቲም', 'ሽንኩርት', 'ድንች', 'በሶ', 'አጃ', 'ሩዝ', 'ቅንጨ', 'ምስር', 'አተር', 'ለውዝ'
+    ];
+    const grocery = PRODUCTS.filter(p => p.cat === 'Grocery' && !p.builder);
+    // Sort: name matches first, then rest of grocery
+    const scored = grocery.map(p => {
+      const hit = prefer.some(k => p.name.includes(k));
+      return { p, hit };
+    });
+    scored.sort((a,b) => (b.hit - a.hit) || a.p.name.localeCompare(b.p.name));
+    return scored.map(s => s.p);
+  }
+
+  let builderQty = {}; // id -> qty
+
+  function openBuilder(){
+    builderQty = {};
+    renderBuilder();
+    document.getElementById('builderOverlay').classList.add('open');
+  }
+  function closeBuilder(){
+    document.getElementById('builderOverlay').classList.remove('open');
+  }
+
+  function renderBuilder(){
+    const body = document.getElementById('builderBody');
+    const items = builderCatalog();
+    if(!items.length){
+      body.innerHTML = '<p style="padding:12px;color:#8a7a6c;">No grocery items available yet.</p>';
+      document.getElementById('builderTotal').textContent = formatETB(0);
+      return;
+    }
+    body.innerHTML = items.map(p => {
+      const unit = p.sale != null ? p.sale : p.price;
+      const q = builderQty[p.id] || 0;
+      return `<div class="builder-row" data-id="${p.id}">
+        <div>
+          <div class="bname">${p.name}</div>
+          <div class="bunit">${formatETB(unit)} each</div>
+        </div>
+        <div class="bqty">
+          <button type="button" class="b-dec" aria-label="Decrease">−</button>
+          <span class="n">${q}</span>
+          <button type="button" class="b-inc" aria-label="Increase">+</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    body.querySelectorAll('.builder-row').forEach(row => {
+      const id = Number(row.dataset.id);
+      row.querySelector('.b-inc').onclick = () => {
+        builderQty[id] = (builderQty[id] || 0) + 1;
+        renderBuilder();
+      };
+      row.querySelector('.b-dec').onclick = () => {
+        if(!builderQty[id]) return;
+        builderQty[id] -= 1;
+        if(builderQty[id] <= 0) delete builderQty[id];
+        renderBuilder();
+      };
+    });
+
+    let total = 0;
+    Object.entries(builderQty).forEach(([id, qty]) => {
+      const p = PRODUCTS.find(x => x.id === Number(id));
+      if(!p || qty <= 0) return;
+      const unit = p.sale != null ? p.sale : p.price;
+      total += unit * qty;
+    });
+    document.getElementById('builderTotal').textContent = formatETB(total);
+  }
+
+  document.getElementById('builderClose').onclick = closeBuilder;
+  document.getElementById('builderOverlay').addEventListener('click', (e) => {
+    if(e.target.id === 'builderOverlay') closeBuilder();
+  });
+  document.getElementById('builderClear').onclick = () => {
+    builderQty = {};
+    renderBuilder();
+  };
+  document.getElementById('builderAdd').onclick = () => {
+    const entries = Object.entries(builderQty).filter(([,q]) => q > 0);
+    if(!entries.length){
+      showToast('ቢያንስ አንድ እቃ ይምረጡ · Select at least one item');
+      return;
+    }
+    entries.forEach(([id, qty]) => {
+      const pid = Number(id);
+      cart[pid] = (cart[pid] || 0) + qty;
+    });
+    updateCartUI();
+    closeBuilder();
+    showToast('ሳምንታዊ አስቤዛ · Weekly Asbeza added to cart');
+    openDrawer();
+  };
+
+
+  // ===== Init =====
+  function init(){
+    renderCats();
+    renderGrid();
+    updateCartUI();
+    document.getElementById('ledgerDepts').textContent = CATEGORIES.length - 1;
+    document.getElementById('ledgerItems').textContent = PRODUCTS.length;
+    document.getElementById('ledgerSale').textContent = PRODUCTS.filter(p=>p.sale).length;
+    const ob = document.getElementById('openBuilderBtn');
+    if(ob) ob.onclick = openBuilder;
+    const giftsBtn = document.getElementById('giftsJumpBtn');
+    if(giftsBtn){
+      giftsBtn.onclick = () => {
+        activeCategory = 'All';
+        searchTerm = '';
+        document.getElementById('searchInput').value = '';
+        renderCats();
+        renderGrid();
+        document.getElementById('packagesStrip').scrollIntoView({behavior:'smooth', block:'start'});
+      };
+    }
+  }
+  init();
+</script>
+
+</body>
+</html>
