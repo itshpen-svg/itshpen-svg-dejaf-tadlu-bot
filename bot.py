@@ -4,6 +4,7 @@ Browse catalog, cart, checkout. Order summary goes to shop owner.
 """
 
 import os
+import asyncio
 import logging
 import uuid
 from dotenv import load_dotenv
@@ -548,6 +549,15 @@ def main():
             "Set it on Render from /myid."
         )
 
+    # Python 3.12+ / 3.14 on Render: create a main-thread event loop first
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError("loop closed")
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
     application = (
         Application.builder()
         .token(BOT_TOKEN)
@@ -562,7 +572,11 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
 
     logger.info("Starting bot (polling)...")
-    application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
+    application.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        drop_pending_updates=True,
+        close_loop=False,
+    )
 
 
 if __name__ == "__main__":
