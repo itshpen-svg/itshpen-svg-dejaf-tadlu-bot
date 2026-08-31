@@ -4,6 +4,7 @@ Browse catalog, cart, checkout. Order summary goes to shop owner.
 """
 
 import os
+from pathlib import Path
 import asyncio
 import logging
 import uuid
@@ -47,6 +48,26 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Folder where bot.py lives (photos/ is next to it on Render)
+BASE_DIR = Path(__file__).resolve().parent
+
+
+def resolve_photo(path_str):
+    """Return absolute path to a product photo, or None if missing."""
+    if not path_str:
+        return None
+    p = Path(path_str)
+    if not p.is_absolute():
+        p = BASE_DIR / p
+    if p.is_file():
+        return p
+    # also try plain filename under photos/
+    alt = BASE_DIR / "photos" / Path(path_str).name
+    if alt.is_file():
+        return alt
+    return None
+
+
 PRODUCTS_BY_ID = {p["id"]: p for p in PRODUCTS}
 
 carts = {}
@@ -84,14 +105,14 @@ def cart_totals(chat_id):
 
 def main_menu_keyboard(chat_id=None):
     buttons = [
-        [InlineKeyboardButton("Browse Categories", callback_data="menu:categories")],
-        [InlineKeyboardButton("Weekly Asbeza", callback_data="menu:asbeza")],
-        [InlineKeyboardButton("View Cart", callback_data="menu:cart")],
+        [InlineKeyboardButton("🛍 Browse Categories", callback_data="menu:categories")],
+        [InlineKeyboardButton("🥬 Weekly Asbeza", callback_data="menu:asbeza")],
+        [InlineKeyboardButton("🛒 View Cart", callback_data="menu:cart")],
     ]
     if chat_id is not None and cart_lines(chat_id):
-        buttons.append([InlineKeyboardButton("Checkout", callback_data="checkout:start")])
-        buttons.append([InlineKeyboardButton("Clear Cart", callback_data="cart:clear")])
-    buttons.append([InlineKeyboardButton("Visit Our Website", url=WEBSITE_URL)])
+        buttons.append([InlineKeyboardButton("✅ Checkout", callback_data="checkout:start")])
+        buttons.append([InlineKeyboardButton("🗑 Clear Cart", callback_data="cart:clear")])
+    buttons.append([InlineKeyboardButton("🌐 Visit Our Website", url=WEBSITE_URL)])
     return InlineKeyboardMarkup(buttons)
 
 
@@ -105,11 +126,18 @@ def categories_keyboard():
             row = []
     if row:
         buttons.append(row)
-    buttons.append([InlineKeyboardButton("Back", callback_data="menu:main")])
+    buttons.append([InlineKeyboardButton("⬅ Back", callback_data="menu:main")])
     return InlineKeyboardMarkup(buttons)
 
 
+def safe_text(value, fallback="…"):
+    """Telegram rejects empty message text/captions."""
+    s = (value or "").strip()
+    return s if s else fallback
+
+
 def photo_products_in(cat):
+
     return [p for p in PRODUCTS if p["cat"] == cat and p.get("photo")]
 
 
@@ -126,7 +154,7 @@ def products_keyboard(cat):
         price = unit_price(p)
         label = p["name"] + " - " + fmt_etb(price)
         buttons.append([InlineKeyboardButton(label, callback_data="add:" + str(p["id"]))])
-    buttons.append([InlineKeyboardButton("Back to Categories", callback_data="menu:categories")])
+    buttons.append([InlineKeyboardButton("⬅ Categories", callback_data="menu:categories")])
     return InlineKeyboardMarkup(buttons)
 
 
@@ -151,10 +179,10 @@ def cart_keyboard(chat_id):
             ]
         )
     if cart_lines(chat_id):
-        buttons.append([InlineKeyboardButton("Checkout", callback_data="checkout:start")])
-        buttons.append([InlineKeyboardButton("Clear Cart", callback_data="cart:clear")])
-    buttons.append([InlineKeyboardButton("Visit Our Website", url=WEBSITE_URL)])
-    buttons.append([InlineKeyboardButton("Back", callback_data="menu:main")])
+        buttons.append([InlineKeyboardButton("✅ Checkout", callback_data="checkout:start")])
+        buttons.append([InlineKeyboardButton("🗑 Clear Cart", callback_data="cart:clear")])
+    buttons.append([InlineKeyboardButton("🌐 Visit Our Website", url=WEBSITE_URL)])
+    buttons.append([InlineKeyboardButton("⬅ Back", callback_data="menu:main")])
     return InlineKeyboardMarkup(buttons)
 
 
@@ -184,11 +212,14 @@ async def send_cart_photo_album(context, chat_id):
     opened = []
     try:
         for l in photo_lines[:10]:
-            path = l["product"]["photo"]
+            path = resolve_photo(l["product"].get("photo"))
+            if not path:
+                logger.error("Missing photo for cart item: %s", l["product"].get("photo"))
+                continue
             try:
                 f = open(path, "rb")
-            except FileNotFoundError:
-                logger.error("Missing photo: %s", path)
+            except OSError as e:
+                logger.error("Missing photo: %s (%s)", path, e)
                 continue
             opened.append(f)
             media.append(InputMediaPhoto(f, caption=l["product"]["name"] + " x" + str(l["qty"])))
@@ -275,17 +306,21 @@ async def show_grocery_asbeza(context, chat_id, edit_query=None):
         )
     for p in photo_products_in("Grocery"):
         try:
-            with open(p["photo"], "rb") as photo_file:
+            photo_path = resolve_photo(p.get("photo"))
+            if not photo_path:
+                logger.error("Missing photo file: %s (cwd=%s base=%s)", p.get("photo"), Path.cwd(), BASE_DIR)
+                raise FileNotFoundError(p.get("photo") or "")
+            with open(photo_path, "rb") as photo_file:
                 await context.bot.send_photo(
                     chat_id=chat_id,
                     photo=photo_file,
-                    caption=p["name"] + "\n" + fmt_etb(unit_price(p)),
+                    caption=safe_text(p.get("name"), "Product") + "\n" + fmt_etb(unit_price(p)),
                     reply_markup=product_photo_keyboard(p),
                 )
         except FileNotFoundError:
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=p["name"] + " - " + fmt_etb(unit_price(p)),
+                text=safe_text(p.get("name"), "Product") + " - " + fmt_etb(unit_price(p)),
                 reply_markup=InlineKeyboardMarkup(
                     [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
                 ),
@@ -317,36 +352,67 @@ async def on_button(update, context):
         return
 
     if data.startswith("cat:"):
-        cat = data.split(":", 1)[1]
+        cat = data.split(":", 1)[1].strip()
+        if not cat:
+            await query.edit_message_text(
+                "Choose a department:",
+                reply_markup=categories_keyboard(),
+            )
+            return
         photo_items = photo_products_in(cat)
         text_items = text_products_in(cat)
+        header = safe_text(cat, "Products")
         if text_items or not photo_items:
-            await query.edit_message_text(cat, reply_markup=products_keyboard(cat))
+            await query.edit_message_text(
+                header,
+                reply_markup=products_keyboard(cat),
+            )
         else:
-            await query.edit_message_text(cat)
+            await query.edit_message_text(
+                header + "\n\nPhotos of items in this department:"
+            )
         for p in photo_items:
             try:
-                with open(p["photo"], "rb") as photo_file:
+                photo_path = resolve_photo(p.get("photo"))
+                if not photo_path:
+                    logger.error(
+                        "Missing photo file: %s (cwd=%s base=%s)",
+                        p.get("photo"),
+                        Path.cwd(),
+                        BASE_DIR,
+                    )
+                    raise FileNotFoundError(p.get("photo") or "")
+                with open(photo_path, "rb") as photo_file:
                     await context.bot.send_photo(
                         chat_id=chat_id,
                         photo=photo_file,
-                        caption=p["name"] + "\n" + fmt_etb(unit_price(p)),
+                        caption=safe_text(p.get("name"), "Product") + "\n" + fmt_etb(unit_price(p)),
                         reply_markup=product_photo_keyboard(p),
                     )
             except FileNotFoundError:
                 await context.bot.send_message(
                     chat_id=chat_id,
-                    text=p["name"] + " - " + fmt_etb(unit_price(p)),
+                    text=safe_text(p.get("name"), "Product") + " - " + fmt_etb(unit_price(p)),
                     reply_markup=InlineKeyboardMarkup(
                         [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
                     ),
                 )
+            except Exception as e:
+                logger.error("send_photo failed for %s: %s", p.get("name"), e)
+                await context.bot.send_message(
+                    chat_id=chat_id,
+                    text=safe_text(p.get("name"), "Product") + " - " + fmt_etb(unit_price(p)),
+                    reply_markup=InlineKeyboardMarkup(
+                        [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
+                    ),
+                )
+
         if photo_items:
             await context.bot.send_message(
                 chat_id=chat_id,
                 text="That's everything in this department.",
                 reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("Back to Categories", callback_data="menu:categories")]]
+                    [[InlineKeyboardButton("⬅ Categories", callback_data="menu:categories")]]
                 ),
             )
         return
@@ -419,21 +485,39 @@ async def on_text(update, context):
     if state.get("stage") == "name":
         state["name"] = text
         state["stage"] = "address"
-        await update.message.reply_text(
-            "Thanks, " + text + ".\n\nPlease send your delivery address in Addis Ababa."
-        )
-        return
-
-    if state.get("stage") == "address":
-        state["address"] = text
-        state["stage"] = "contact"
-        kb = ReplyKeyboardMarkup(
-            [[KeyboardButton("Share my phone number", request_contact=True)]],
+        loc_kb = ReplyKeyboardMarkup(
+            [
+                [KeyboardButton("📍 Share my location", request_location=True)],
+                [KeyboardButton("Skip — type address instead")],
+            ],
             resize_keyboard=True,
             one_time_keyboard=True,
         )
         await update.message.reply_text(
-            "Please share your phone number (or type it).", reply_markup=kb
+            "Thanks, " + text + ".\n\n"
+            "Send your delivery address in Addis Ababa,\n"
+            "or tap 📍 Share my location.",
+            reply_markup=loc_kb,
+        )
+        return
+
+    if state.get("stage") == "address":
+        if text.startswith("Skip"):
+            await update.message.reply_text(
+                "Please type your delivery address in Addis Ababa.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
+            return
+        state["address"] = text
+        state["stage"] = "contact"
+        kb = ReplyKeyboardMarkup(
+            [[KeyboardButton("📱 Share my phone number", request_contact=True)]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
+        await update.message.reply_text(
+            "Please share your phone number (or type it).",
+            reply_markup=kb,
         )
         return
 
@@ -441,6 +525,35 @@ async def on_text(update, context):
         state["contact"] = text
         await finish_checkout(update, context, chat_id)
         return
+
+
+
+async def on_location(update, context):
+    chat_id = update.effective_chat.id
+    state = checkout_state.get(chat_id)
+    if not state or state.get("stage") != "address":
+        return
+    loc = update.message.location
+    if not loc:
+        await update.message.reply_text("Could not read location. Please type your address.")
+        return
+    state["address"] = (
+        "Location: "
+        + str(round(loc.latitude, 6))
+        + ", "
+        + str(round(loc.longitude, 6))
+        + " (map pin from customer)"
+    )
+    state["stage"] = "contact"
+    kb = ReplyKeyboardMarkup(
+        [[KeyboardButton("Share my phone number", request_contact=True)]],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+    await update.message.reply_text(
+        "Location saved. Please share your phone number (or type it).",
+        reply_markup=kb,
+    )
 
 
 async def on_contact(update, context):
@@ -569,8 +682,14 @@ def main():
     application.add_handler(CommandHandler("cancel", cancel))
     application.add_handler(CallbackQueryHandler(on_button))
     application.add_handler(MessageHandler(filters.CONTACT, on_contact))
+    application.add_handler(MessageHandler(filters.LOCATION, on_location))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
 
+    photos_dir = BASE_DIR / "photos"
+    n_photos = len(list(photos_dir.glob("*.jpg"))) if photos_dir.is_dir() else 0
+    logger.info("Photo folder: %s (%s jpg files)", photos_dir, n_photos)
+    if n_photos == 0:
+        logger.warning("No photos/*.jpg found — Telegram will not show product images")
     logger.info("Starting bot (polling)...")
     application.run_polling(
         allowed_updates=Update.ALL_TYPES,
@@ -581,3 +700,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
