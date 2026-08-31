@@ -52,20 +52,66 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 
 
+def is_photo_url(path_str):
+    s = (path_str or "").strip().lower()
+    return s.startswith("http://") or s.startswith("https://")
+
+
 def resolve_photo(path_str):
-    """Return absolute path to a product photo, or None if missing."""
-    if not path_str:
+    """Return Path to a local photo file, or None. URLs are handled separately."""
+    if not path_str or is_photo_url(path_str):
         return None
+    candidates = []
     p = Path(path_str)
-    if not p.is_absolute():
-        p = BASE_DIR / p
-    if p.is_file():
-        return p
-    # also try plain filename under photos/
-    alt = BASE_DIR / "photos" / Path(path_str).name
-    if alt.is_file():
-        return alt
+    if p.is_absolute():
+        candidates.append(p)
+    else:
+        candidates.append(BASE_DIR / p)
+        candidates.append(BASE_DIR / "photos" / p.name)
+        candidates.append(Path.cwd() / p)
+        candidates.append(Path.cwd() / "photos" / p.name)
+        # Render sometimes uses /opt/render/project/src
+        candidates.append(Path("/opt/render/project/src") / p)
+        candidates.append(Path("/opt/render/project/src/photos") / p.name)
+    for c in candidates:
+        try:
+            if c.is_file():
+                return c
+        except OSError:
+            continue
     return None
+
+
+async def send_product_photo(context, chat_id, product):
+    """Send one product photo (local file or URL) with Add button."""
+    raw = (product.get("photo") or "").strip()
+    caption = safe_text(product.get("name"), "Product") + "\n" + fmt_etb(unit_price(product))
+    markup = product_photo_keyboard(product)
+    try:
+        if is_photo_url(raw):
+            await context.bot.send_photo(
+                chat_id=chat_id, photo=raw, caption=caption, reply_markup=markup
+            )
+            return True
+        path = resolve_photo(raw)
+        if not path:
+            logger.error(
+                "Missing photo for id=%s path=%s base=%s cwd=%s dir=%s",
+                product.get("id"),
+                raw,
+                BASE_DIR,
+                Path.cwd(),
+                list((BASE_DIR / "photos").glob("*.jpg"))[:5] if (BASE_DIR / "photos").is_dir() else "no-photos-dir",
+            )
+            return False
+        with open(path, "rb") as photo_file:
+            await context.bot.send_photo(
+                chat_id=chat_id, photo=photo_file, caption=caption, reply_markup=markup
+            )
+        return True
+    except Exception as e:
+        logger.error("send_product_photo failed id=%s: %s", product.get("id"), e)
+        return False
 
 
 PRODUCTS_BY_ID = {p["id"]: p for p in PRODUCTS}
@@ -282,6 +328,29 @@ async def myid(update, context):
     )
 
 
+
+async def photos_debug(update, context):
+    """Owner can run /photos to see if image files are on the server."""
+    photos_dir = BASE_DIR / "photos"
+    lines = [
+        "Photo debug",
+        "BASE_DIR: " + str(BASE_DIR),
+        "cwd: " + str(Path.cwd()),
+        "photos dir exists: " + str(photos_dir.is_dir()),
+    ]
+    if photos_dir.is_dir():
+        files = sorted(list(photos_dir.glob("*.jpg")) + list(photos_dir.glob("*.jpeg")) + list(photos_dir.glob("*.png")))
+        lines.append("image count: " + str(len(files)))
+        lines.append("sample: " + ", ".join(f.name for f in files[:15]))
+    else:
+        top = list(BASE_DIR.iterdir())[:30]
+        lines.append("top files: " + ", ".join(p.name for p in top))
+    with_photo = [p for p in PRODUCTS if p.get("photo")]
+    lines.append("products with photo field: " + str(len(with_photo)))
+    await update.message.reply_text(chr(10).join(lines)[:3500])
+
+
+
 async def cancel(update, context):
     chat_id = update.effective_chat.id
     if checkout_state.pop(chat_id, None) is not None:
@@ -305,19 +374,8 @@ async def show_grocery_asbeza(context, chat_id, edit_query=None):
             chat_id=chat_id, text=tip, reply_markup=products_keyboard("Grocery")
         )
     for p in photo_products_in("Grocery"):
-        try:
-            photo_path = resolve_photo(p.get("photo"))
-            if not photo_path:
-                logger.error("Missing photo file: %s (cwd=%s base=%s)", p.get("photo"), Path.cwd(), BASE_DIR)
-                raise FileNotFoundError(p.get("photo") or "")
-            with open(photo_path, "rb") as photo_file:
-                await context.bot.send_photo(
-                    chat_id=chat_id,
-                    photo=photo_file,
-                    caption=safe_text(p.get("name"), "Product") + "\n" + fmt_etb(unit_price(p)),
-                    reply_markup=product_photo_keyboard(p),
-                )
-        except FileNotFoundError:
+        ok = await send_product_photo(context, chat_id, p)
+        if not ok:
             await context.bot.send_message(
                 chat_id=chat_id,
                 text=safe_text(p.get("name"), "Product") + " - " + fmt_etb(unit_price(p)),
@@ -372,24 +430,8 @@ async def on_button(update, context):
                 header + "\n\nPhotos of items in this department:"
             )
         for p in photo_items:
-            try:
-                photo_path = resolve_photo(p.get("photo"))
-                if not photo_path:
-                    logger.error(
-                        "Missing photo file: %s (cwd=%s base=%s)",
-                        p.get("photo"),
-                        Path.cwd(),
-                        BASE_DIR,
-                    )
-                    raise FileNotFoundError(p.get("photo") or "")
-                with open(photo_path, "rb") as photo_file:
-                    await context.bot.send_photo(
-                        chat_id=chat_id,
-                        photo=photo_file,
-                        caption=safe_text(p.get("name"), "Product") + "\n" + fmt_etb(unit_price(p)),
-                        reply_markup=product_photo_keyboard(p),
-                    )
-            except FileNotFoundError:
+            ok = await send_product_photo(context, chat_id, p)
+            if not ok:
                 await context.bot.send_message(
                     chat_id=chat_id,
                     text=safe_text(p.get("name"), "Product") + " - " + fmt_etb(unit_price(p)),
@@ -397,16 +439,6 @@ async def on_button(update, context):
                         [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
                     ),
                 )
-            except Exception as e:
-                logger.error("send_photo failed for %s: %s", p.get("name"), e)
-                await context.bot.send_message(
-                    chat_id=chat_id,
-                    text=safe_text(p.get("name"), "Product") + " - " + fmt_etb(unit_price(p)),
-                    reply_markup=InlineKeyboardMarkup(
-                        [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
-                    ),
-                )
-
         if photo_items:
             await context.bot.send_message(
                 chat_id=chat_id,
@@ -679,6 +711,7 @@ def main():
     )
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("myid", myid))
+    application.add_handler(CommandHandler("photos", photos_debug))
     application.add_handler(CommandHandler("cancel", cancel))
     application.add_handler(CallbackQueryHandler(on_button))
     application.add_handler(MessageHandler(filters.CONTACT, on_contact))
@@ -700,4 +733,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
