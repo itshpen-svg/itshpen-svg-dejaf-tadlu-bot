@@ -41,6 +41,7 @@ OWNER_CHAT_ID = (os.getenv("OWNER_CHAT_ID") or "").strip()
 VAT_RATE = 0.15
 SHOP_NAME = "Dejaf Tadlu"
 WEBSITE_URL = os.getenv("WEBSITE_URL", "https://dejaf-tadlu-onlineshopping.netlify.app")
+PHOTO_BASE_URL = (os.getenv("PHOTO_BASE_URL") or "https://raw.githubusercontent.com/itshpen-svg/dejaf-tadlu-bot/main/").rstrip("/") + "/"
 PORT = int(os.getenv("PORT", "10000"))
 
 logging.basicConfig(
@@ -61,18 +62,18 @@ def resolve_photo(path_str):
     """Return Path to a local photo file, or None. URLs are handled separately."""
     if not path_str or is_photo_url(path_str):
         return None
-    candidates = []
-    p = Path(path_str)
-    if p.is_absolute():
-        candidates.append(p)
-    else:
-        candidates.append(BASE_DIR / p)
-        candidates.append(BASE_DIR / "photos" / p.name)
-        candidates.append(Path.cwd() / p)
-        candidates.append(Path.cwd() / "photos" / p.name)
-        # Render sometimes uses /opt/render/project/src
-        candidates.append(Path("/opt/render/project/src") / p)
-        candidates.append(Path("/opt/render/project/src/photos") / p.name)
+    name = Path(path_str).name
+    candidates = [
+        BASE_DIR / path_str,
+        BASE_DIR / name,
+        BASE_DIR / "photos" / name,
+        Path.cwd() / path_str,
+        Path.cwd() / name,
+        Path.cwd() / "photos" / name,
+        Path("/opt/render/project/src") / name,
+        Path("/opt/render/project/src") / path_str,
+        Path("/opt/render/project/src/photos") / name,
+    ]
     for c in candidates:
         try:
             if c.is_file():
@@ -82,43 +83,42 @@ def resolve_photo(path_str):
     return None
 
 
+
 async def send_product_photo(context, chat_id, product):
-    """Send one product photo (local file or URL) with Add button."""
+    """Send one product photo (local file or public URL) with Add button."""
     raw = (product.get("photo") or "").strip()
-    caption = safe_text(product.get("name"), "Product") + "\n" + fmt_etb(unit_price(product))
+    caption = safe_text(product.get("name"), "Product") + chr(10) + fmt_etb(unit_price(product))
     markup = product_photo_keyboard(product)
+
+    async def _send(photo_src):
+        await context.bot.send_photo(
+            chat_id=chat_id, photo=photo_src, caption=caption, reply_markup=markup
+        )
+
     try:
         if is_photo_url(raw):
-            await context.bot.send_photo(
-                chat_id=chat_id, photo=raw, caption=caption, reply_markup=markup
-            )
+            await _send(raw)
             return True
+
         path = resolve_photo(raw)
-        if not path:
-            logger.error(
-                "Missing photo for id=%s path=%s base=%s cwd=%s dir=%s",
-                product.get("id"),
-                raw,
-                BASE_DIR,
-                Path.cwd(),
-                list((BASE_DIR / "photos").glob("*.jpg"))[:5] if (BASE_DIR / "photos").is_dir() else "no-photos-dir",
-            )
-            return False
-        with open(path, "rb") as photo_file:
-            await context.bot.send_photo(
-                chat_id=chat_id, photo=photo_file, caption=caption, reply_markup=markup
-            )
-        return True
+        if path:
+            with open(path, "rb") as photo_file:
+                await _send(photo_file)
+            return True
+
+        if raw:
+            url = PHOTO_BASE_URL + raw.lstrip("/")
+            logger.info("Trying photo URL for id=%s: %s", product.get("id"), url)
+            await _send(url)
+            return True
+
+        logger.error("No photo path for id=%s", product.get("id"))
+        return False
     except Exception as e:
-        logger.error("send_product_photo failed id=%s: %s", product.get("id"), e)
+        logger.error("send_product_photo failed id=%s raw=%s: %s", product.get("id"), raw, e)
         return False
 
 
-PRODUCTS_BY_ID = {p["id"]: p for p in PRODUCTS}
-
-carts = {}
-checkout_state = {}
-pending_orders = {}
 
 
 def fmt_etb(amount):
@@ -346,6 +346,9 @@ async def photos_debug(update, context):
         top = list(BASE_DIR.iterdir())[:30]
         lines.append("top files: " + ", ".join(p.name for p in top))
     with_photo = [p for p in PRODUCTS if p.get("photo")]
+    root_jpgs = sorted(BASE_DIR.glob("*.jpg"))
+    lines.append("root jpg count: " + str(len(root_jpgs)))
+    lines.append("root sample: " + ", ".join(p.name for p in root_jpgs[:12]))
     lines.append("products with photo field: " + str(len(with_photo)))
     await update.message.reply_text(chr(10).join(lines)[:3500])
 
@@ -733,3 +736,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
