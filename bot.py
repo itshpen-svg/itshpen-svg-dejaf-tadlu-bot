@@ -40,7 +40,7 @@ BOT_TOKEN = (os.getenv("BOT_TOKEN") or "").strip()
 OWNER_CHAT_ID = (os.getenv("OWNER_CHAT_ID") or "").strip()
 VAT_RATE = 0.15
 SHOP_NAME = "Dejaf Tadlu"
-WEBSITE_URL = os.getenv("WEBSITE_URL", "https://dejaf-tadlu-onlinshopping.netlify.app")
+WEBSITE_URL = os.getenv("WEBSITE_URL", "https://dejaf-tadlu-onlineshopping.netlify.app")
 PHOTO_BASE_URL = (os.getenv("PHOTO_BASE_URL") or "https://raw.githubusercontent.com/itshpen-svg/dejaf-tadlu-bot/main/").rstrip("/") + "/"
 PORT = int(os.getenv("PORT", "10000"))
 
@@ -160,6 +160,19 @@ def main_menu_keyboard(chat_id=None):
         buttons.append([InlineKeyboardButton("🗑 Clear Cart", callback_data="cart:clear")])
     buttons.append([InlineKeyboardButton("🌐 Visit Our Website", url=WEBSITE_URL)])
     return InlineKeyboardMarkup(buttons)
+
+
+def reply_main_keyboard():
+    """Always-visible bottom menu (works even if inline buttons fail)."""
+    return ReplyKeyboardMarkup(
+        [
+            ["Browse Categories", "Weekly Asbeza"],
+            ["View Cart", "Checkout"],
+            ["Visit Website", "Help"],
+        ],
+        resize_keyboard=True,
+    )
+
 
 
 def categories_keyboard():
@@ -307,21 +320,30 @@ async def start(update, context):
         await update.message.reply_text(
             "Selam! Welcome to " + SHOP_NAME + "\n\n"
             "We loaded " + str(loaded) + " item(s) from your website cart." + note + "\n\n"
-            "Review it below, then checkout when ready."
+            "Review it below, then checkout when ready.",
+            reply_markup=reply_main_keyboard(),
         )
-        await update.message.reply_text(cart_text(chat_id), reply_markup=cart_keyboard(chat_id))
+        await update.message.reply_text(
+            cart_text(chat_id),
+            reply_markup=cart_keyboard(chat_id),
+        )
         return
 
     await update.message.reply_text(
         "Selam! Welcome to " + SHOP_NAME + "\n\n"
-        "Browse our catalog and order right here in Telegram.\n\n"
-        "Try Weekly Asbeza - build a vegetable basket from Grocery.\n"
-        "Payment: Cash on Delivery (pay when you receive your order)",
+        "Use the bottom buttons: Browse Categories, Weekly Asbeza, View Cart, Website.\n"
+        "Payment: Cash on Delivery.",
+        reply_markup=reply_main_keyboard(),
+    )
+    await update.message.reply_text(
+        "Quick menu:",
         reply_markup=main_menu_keyboard(chat_id),
     )
 
 
 async def myid(update, context):
+
+
     await update.message.reply_text(
         "Your chat ID is: " + str(update.effective_chat.id) + "\n\n"
         "If you are the shop owner, put this in .env as OWNER_CHAT_ID and restart."
@@ -540,9 +562,69 @@ async def on_text(update, context):
     chat_id = update.effective_chat.id
     text = (update.message.text or "").strip()
     state = checkout_state.get(chat_id)
+
     if not state:
+        low = text.lower()
+        if text in ("Browse Categories", "Categories"):
+            await update.message.reply_text(
+                "Choose a department:",
+                reply_markup=categories_keyboard(),
+            )
+            return
+        if text in ("Weekly Asbeza", "Asbeza") or "asbeza" in low:
+            await show_grocery_asbeza(context, chat_id, edit_query=None)
+            return
+        if text in ("View Cart", "Cart"):
+            if not cart_lines(chat_id):
+                await update.message.reply_text(
+                    "Your cart is empty.",
+                    reply_markup=cart_keyboard(chat_id),
+                )
+            else:
+                await update.message.reply_text(
+                    cart_text(chat_id),
+                    reply_markup=cart_keyboard(chat_id),
+                )
+                await send_cart_photo_album(context, chat_id)
+            return
+        if text == "Checkout":
+            if not cart_lines(chat_id):
+                await update.message.reply_text(
+                    "Your cart is empty. Add items first.",
+                    reply_markup=reply_main_keyboard(),
+                )
+                return
+            checkout_state[chat_id] = {"stage": "name"}
+            await update.message.reply_text(
+                "Checkout\n\nPlease send your full name.",
+                reply_markup=ReplyKeyboardRemove(),
+            )
+            return
+        if text in ("Visit Website", "Website") or "website" in low:
+            await update.message.reply_text(
+                "Our website:\n" + WEBSITE_URL,
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("Open website", url=WEBSITE_URL)]]
+                ),
+            )
+            return
+        if text in ("Help", "/help"):
+            await update.message.reply_text(
+                SHOP_NAME + "\n\n"
+                "Browse Categories — shop by department\n"
+                "Weekly Asbeza — build a grocery basket\n"
+                "View Cart / Checkout — finish your order\n"
+                "Visit Website — open the online shop\n\n"
+                "Payment: Cash on Delivery in Addis Ababa.",
+                reply_markup=reply_main_keyboard(),
+            )
+            return
         await update.message.reply_text(
-            "Use the menu buttons to browse and order.",
+            "Use the bottom menu buttons.",
+            reply_markup=reply_main_keyboard(),
+        )
+        await update.message.reply_text(
+            "Quick menu:",
             reply_markup=main_menu_keyboard(chat_id),
         )
         return
@@ -552,7 +634,7 @@ async def on_text(update, context):
         state["stage"] = "address"
         loc_kb = ReplyKeyboardMarkup(
             [
-                [KeyboardButton("📍 Share my location", request_location=True)],
+                [KeyboardButton("Share my location", request_location=True)],
                 [KeyboardButton("Skip — type address instead")],
             ],
             resize_keyboard=True,
@@ -561,7 +643,7 @@ async def on_text(update, context):
         await update.message.reply_text(
             "Thanks, " + text + ".\n\n"
             "Send your delivery address in Addis Ababa,\n"
-            "or tap 📍 Share my location.",
+            "or tap Share my location.",
             reply_markup=loc_kb,
         )
         return
@@ -576,7 +658,7 @@ async def on_text(update, context):
         state["address"] = text
         state["stage"] = "contact"
         kb = ReplyKeyboardMarkup(
-            [[KeyboardButton("📱 Share my phone number", request_contact=True)]],
+            [[KeyboardButton("Share my phone number", request_contact=True)]],
             resize_keyboard=True,
             one_time_keyboard=True,
         )
@@ -590,7 +672,6 @@ async def on_text(update, context):
         state["contact"] = text
         await finish_checkout(update, context, chat_id)
         return
-
 
 
 async def on_location(update, context):
