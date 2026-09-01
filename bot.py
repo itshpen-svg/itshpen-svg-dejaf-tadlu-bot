@@ -32,6 +32,10 @@ from telegram.ext import (
 
 from products import PRODUCTS, CATEGORIES
 
+PRODUCTS_BY_ID = {p["id"]: p for p in PRODUCTS}
+carts = {}
+checkout_state = {}
+
 # Payment on delivery only — no online payment gateway
 HAS_CHAPA = False
 
@@ -301,56 +305,69 @@ async def send_cart_photo_album(context, chat_id):
 
 async def start(update, context):
     chat_id = update.effective_chat.id
-    checkout_state.pop(chat_id, None)
-    payload = context.args[0] if context.args else None
-    loaded = 0
-    skipped = False
+    try:
+        checkout_state.pop(chat_id, None)
+        payload = context.args[0] if context.args else None
+        loaded = 0
+        skipped = False
 
-    if payload:
-        carts.setdefault(chat_id, {})
-        for part in payload.split("-"):
-            try:
-                pid_str, qty_str = part.split("_")
-                pid, qty = int(pid_str), int(qty_str)
-            except (ValueError, IndexError):
-                skipped = True
-                continue
-            p = PRODUCTS_BY_ID.get(pid)
-            if not p or qty <= 0 or p.get("builder"):
-                skipped = True
-                continue
-            carts[chat_id][pid] = carts[chat_id].get(pid, 0) + qty
-            loaded += 1
+        if payload:
+            carts.setdefault(chat_id, {})
+            for part in payload.split("-"):
+                try:
+                    pid_str, qty_str = part.split("_")
+                    pid, qty = int(pid_str), int(qty_str)
+                except (ValueError, IndexError):
+                    skipped = True
+                    continue
+                p = PRODUCTS_BY_ID.get(pid)
+                if not p or qty <= 0 or p.get("builder"):
+                    skipped = True
+                    continue
+                carts[chat_id][pid] = carts[chat_id].get(pid, 0) + qty
+                loaded += 1
 
-    if loaded > 0:
-        note = ""
-        if skipped:
-            note = "\n\nSome items could not be loaded. Please re-add anything missing."
+        if loaded > 0:
+            note = ""
+            if skipped:
+                note = "\n\nSome items could not be loaded. Please re-add anything missing."
+            await update.message.reply_text(
+                "Selam! Welcome to " + SHOP_NAME + "\n\n"
+                "We loaded " + str(loaded) + " item(s) from your website cart." + note + "\n\n"
+                "Review it below, then checkout when ready.",
+                reply_markup=reply_main_keyboard(),
+            )
+            await update.message.reply_text(
+                cart_text(chat_id),
+                reply_markup=cart_keyboard(chat_id),
+            )
+            return
+
         await update.message.reply_text(
             "Selam! Welcome to " + SHOP_NAME + "\n\n"
-            "We loaded " + str(loaded) + " item(s) from your website cart." + note + "\n\n"
-            "Review it below, then checkout when ready.",
+            "Use the bottom buttons:\n"
+            "Browse Categories | Weekly Asbeza | View Cart | Website\n\n"
+            "Payment: Cash on Delivery.",
             reply_markup=reply_main_keyboard(),
         )
         await update.message.reply_text(
-            cart_text(chat_id),
-            reply_markup=cart_keyboard(chat_id),
+            "Quick menu:",
+            reply_markup=main_menu_keyboard(chat_id),
         )
-        return
-
-    await update.message.reply_text(
-        "Selam! Welcome to " + SHOP_NAME + "\n\n"
-        "Use the bottom buttons: Browse Categories, Weekly Asbeza, View Cart, Website.\n"
-        "Payment: Cash on Delivery.",
-        reply_markup=reply_main_keyboard(),
-    )
-    await update.message.reply_text(
-        "Quick menu:",
-        reply_markup=main_menu_keyboard(chat_id),
-    )
+    except Exception as e:
+        logger.exception("start failed: %s", e)
+        try:
+            await update.message.reply_text(
+                "Bot error on /start. Try again or check Render logs.",
+                reply_markup=reply_main_keyboard(),
+            )
+        except Exception:
+            pass
 
 
 async def myid(update, context):
+
+
 
 
     await update.message.reply_text(
