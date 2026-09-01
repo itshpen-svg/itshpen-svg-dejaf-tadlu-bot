@@ -62,18 +62,18 @@ def resolve_photo(path_str):
     """Return Path to a local photo file, or None. URLs are handled separately."""
     if not path_str or is_photo_url(path_str):
         return None
-    name = Path(path_str).name
-    candidates = [
-        BASE_DIR / path_str,
-        BASE_DIR / name,
-        BASE_DIR / "photos" / name,
-        Path.cwd() / path_str,
-        Path.cwd() / name,
-        Path.cwd() / "photos" / name,
-        Path("/opt/render/project/src") / name,
-        Path("/opt/render/project/src") / path_str,
-        Path("/opt/render/project/src/photos") / name,
-    ]
+    candidates = []
+    p = Path(path_str)
+    if p.is_absolute():
+        candidates.append(p)
+    else:
+        candidates.append(BASE_DIR / p)
+        candidates.append(BASE_DIR / "photos" / p.name)
+        candidates.append(Path.cwd() / p)
+        candidates.append(Path.cwd() / "photos" / p.name)
+        # Render sometimes uses /opt/render/project/src
+        candidates.append(Path("/opt/render/project/src") / p)
+        candidates.append(Path("/opt/render/project/src/photos") / p.name)
     for c in candidates:
         try:
             if c.is_file():
@@ -81,7 +81,6 @@ def resolve_photo(path_str):
         except OSError:
             continue
     return None
-
 
 
 async def send_product_photo(context, chat_id, product):
@@ -346,9 +345,6 @@ async def photos_debug(update, context):
         top = list(BASE_DIR.iterdir())[:30]
         lines.append("top files: " + ", ".join(p.name for p in top))
     with_photo = [p for p in PRODUCTS if p.get("photo")]
-    root_jpgs = sorted(BASE_DIR.glob("*.jpg"))
-    lines.append("root jpg count: " + str(len(root_jpgs)))
-    lines.append("root sample: " + ", ".join(p.name for p in root_jpgs[:12]))
     lines.append("products with photo field: " + str(len(with_photo)))
     await update.message.reply_text(chr(10).join(lines)[:3500])
 
@@ -736,4 +732,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
