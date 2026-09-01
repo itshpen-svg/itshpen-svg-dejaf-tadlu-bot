@@ -40,7 +40,7 @@ BOT_TOKEN = (os.getenv("BOT_TOKEN") or "").strip()
 OWNER_CHAT_ID = (os.getenv("OWNER_CHAT_ID") or "").strip()
 VAT_RATE = 0.15
 SHOP_NAME = "Dejaf Tadlu"
-WEBSITE_URL = os.getenv("WEBSITE_URL", "https://dejaf-tadlu-onlineshopping.netlify.app")
+WEBSITE_URL = os.getenv("WEBSITE_URL", "https://dejaf-tadlu-onlinshopping.netlify.app")
 PHOTO_BASE_URL = (os.getenv("PHOTO_BASE_URL") or "https://raw.githubusercontent.com/itshpen-svg/dejaf-tadlu-bot/main/").rstrip("/") + "/"
 PORT = int(os.getenv("PORT", "10000"))
 
@@ -62,18 +62,18 @@ def resolve_photo(path_str):
     """Return Path to a local photo file, or None. URLs are handled separately."""
     if not path_str or is_photo_url(path_str):
         return None
-    candidates = []
-    p = Path(path_str)
-    if p.is_absolute():
-        candidates.append(p)
-    else:
-        candidates.append(BASE_DIR / p)
-        candidates.append(BASE_DIR / "photos" / p.name)
-        candidates.append(Path.cwd() / p)
-        candidates.append(Path.cwd() / "photos" / p.name)
-        # Render sometimes uses /opt/render/project/src
-        candidates.append(Path("/opt/render/project/src") / p)
-        candidates.append(Path("/opt/render/project/src/photos") / p.name)
+    name = Path(path_str).name
+    candidates = [
+        BASE_DIR / path_str,
+        BASE_DIR / name,
+        BASE_DIR / "photos" / name,
+        Path.cwd() / path_str,
+        Path.cwd() / name,
+        Path.cwd() / "photos" / name,
+        Path("/opt/render/project/src") / name,
+        Path("/opt/render/project/src") / path_str,
+        Path("/opt/render/project/src/photos") / name,
+    ]
     for c in candidates:
         try:
             if c.is_file():
@@ -81,6 +81,7 @@ def resolve_photo(path_str):
         except OSError:
             continue
     return None
+
 
 
 async def send_product_photo(context, chat_id, product):
@@ -345,6 +346,9 @@ async def photos_debug(update, context):
         top = list(BASE_DIR.iterdir())[:30]
         lines.append("top files: " + ", ".join(p.name for p in top))
     with_photo = [p for p in PRODUCTS if p.get("photo")]
+    root_jpgs = sorted(BASE_DIR.glob("*.jpg"))
+    lines.append("root jpg count: " + str(len(root_jpgs)))
+    lines.append("root sample: " + ", ".join(p.name for p in root_jpgs[:12]))
     lines.append("products with photo field: " + str(len(with_photo)))
     await update.message.reply_text(chr(10).join(lines)[:3500])
 
@@ -367,7 +371,13 @@ async def show_grocery_asbeza(context, chat_id, edit_query=None):
         "Payment: Cash on Delivery (pay when you receive your order)"
     )
     if edit_query:
-        await edit_query.edit_message_text(tip, reply_markup=products_keyboard("Grocery"))
+        try:
+            await edit_query.edit_message_text(tip, reply_markup=products_keyboard("Grocery"))
+        except Exception as e:
+            logger.warning("asbeza edit failed: %s", e)
+            await context.bot.send_message(
+                chat_id=chat_id, text=tip, reply_markup=products_keyboard("Grocery")
+            )
     else:
         await context.bot.send_message(
             chat_id=chat_id, text=tip, reply_markup=products_keyboard("Grocery")
@@ -384,28 +394,52 @@ async def show_grocery_asbeza(context, chat_id, edit_query=None):
             )
 
 
+
+async def safe_edit(query, text, reply_markup=None):
+    """Edit callback message, or send a new one if edit is not possible."""
+    text = safe_text(text, "Menu")
+    try:
+        await query.edit_message_text(text, reply_markup=reply_markup)
+        return
+    except Exception as e:
+        logger.warning("edit_message_text failed: %s — sending new message", e)
+        chat_id = query.message.chat_id
+        await query.get_bot().send_message(
+            chat_id=chat_id, text=text, reply_markup=reply_markup
+        )
+
+
 async def on_button(update, context):
     query = update.callback_query
-    await query.answer()
+    try:
+        await query.answer()
+    except Exception as e:
+        logger.warning("query.answer failed: %s", e)
     chat_id = query.message.chat_id
     data = query.data or ""
+    logger.info("button: %s chat=%s", data, chat_id)
 
     if data == "noop":
         return
 
     if data == "menu:main":
-        await query.edit_message_text(
+        await safe_edit(
+            query,
             SHOP_NAME + "\n\nWhat would you like to do?",
-            reply_markup=main_menu_keyboard(chat_id),
+            main_menu_keyboard(chat_id),
         )
         return
 
     if data == "menu:categories":
-        await query.edit_message_text("Choose a department:", reply_markup=categories_keyboard())
+        await safe_edit(query, "Choose a department:", categories_keyboard())
         return
 
     if data == "menu:asbeza":
-        await show_grocery_asbeza(context, chat_id, edit_query=query)
+        try:
+            await show_grocery_asbeza(context, chat_id, edit_query=query)
+        except Exception as e:
+            logger.error("asbeza failed: %s", e)
+            await show_grocery_asbeza(context, chat_id, edit_query=None)
         return
 
     if data.startswith("cat:"):
@@ -485,9 +519,9 @@ async def on_button(update, context):
 
     if data == "menu:cart":
         if not cart_lines(chat_id):
-            await query.edit_message_text("Your cart is empty.", reply_markup=cart_keyboard(chat_id))
+            await safe_edit(query, "Your cart is empty.", cart_keyboard(chat_id))
             return
-        await query.edit_message_text(cart_text(chat_id), reply_markup=cart_keyboard(chat_id))
+        await safe_edit(query, cart_text(chat_id), cart_keyboard(chat_id))
         await send_cart_photo_album(context, chat_id)
         return
 
