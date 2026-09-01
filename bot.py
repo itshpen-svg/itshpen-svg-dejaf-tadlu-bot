@@ -189,7 +189,15 @@ def categories_keyboard():
     return InlineKeyboardMarkup(buttons)
 
 
+def norm_btn(s):
+    """Normalize reply-keyboard text (strip spaces / invisible chars)."""
+    s = (s or "").replace("\u200b", "").replace("\ufeff", "").strip()
+    s = " ".join(s.split())
+    return s.lower()
+
+
 def safe_text(value, fallback="…"):
+
     """Telegram rejects empty message text/captions."""
     s = (value or "").strip()
     return s if s else fallback
@@ -293,6 +301,7 @@ async def send_cart_photo_album(context, chat_id):
 
 async def start(update, context):
     chat_id = update.effective_chat.id
+    checkout_state.pop(chat_id, None)
     payload = context.args[0] if context.args else None
     loaded = 0
     skipped = False
@@ -560,21 +569,32 @@ async def on_button(update, context):
 
 async def on_text(update, context):
     chat_id = update.effective_chat.id
-    text = (update.message.text or "").strip()
-    state = checkout_state.get(chat_id)
+    try:
+        raw = (update.message.text or "")
+        text = norm_btn(raw)
+        logger.info("text from %s: %r -> %r", chat_id, raw[:60], text[:60])
 
-    if not state:
-        low = text.lower()
-        if text in ("Browse Categories", "Categories"):
+        # Menu (always)
+        if text in ("browse categories", "categories", "browse category"):
+            checkout_state.pop(chat_id, None)
             await update.message.reply_text(
                 "Choose a department:",
                 reply_markup=categories_keyboard(),
             )
+            await update.message.reply_text(
+                "Menu:",
+                reply_markup=reply_main_keyboard(),
+            )
             return
-        if text in ("Weekly Asbeza", "Asbeza") or "asbeza" in low:
+
+        if text in ("weekly asbeza", "asbeza", "weekly asbaz", "asbaz"):
+            checkout_state.pop(chat_id, None)
             await show_grocery_asbeza(context, chat_id, edit_query=None)
+            await update.message.reply_text("Menu:", reply_markup=reply_main_keyboard())
             return
-        if text in ("View Cart", "Cart"):
+
+        if text in ("view cart", "cart"):
+            checkout_state.pop(chat_id, None)
             if not cart_lines(chat_id):
                 await update.message.reply_text(
                     "Your cart is empty.",
@@ -586,8 +606,10 @@ async def on_text(update, context):
                     reply_markup=cart_keyboard(chat_id),
                 )
                 await send_cart_photo_album(context, chat_id)
+            await update.message.reply_text("Menu:", reply_markup=reply_main_keyboard())
             return
-        if text == "Checkout":
+
+        if text == "checkout":
             if not cart_lines(chat_id):
                 await update.message.reply_text(
                     "Your cart is empty. Add items first.",
@@ -600,81 +622,105 @@ async def on_text(update, context):
                 reply_markup=ReplyKeyboardRemove(),
             )
             return
-        if text in ("Visit Website", "Website") or "website" in low:
+
+        if text in ("visit website", "website", "visit our website"):
             await update.message.reply_text(
                 "Our website:\n" + WEBSITE_URL,
                 reply_markup=InlineKeyboardMarkup(
                     [[InlineKeyboardButton("Open website", url=WEBSITE_URL)]]
                 ),
             )
+            await update.message.reply_text("Menu:", reply_markup=reply_main_keyboard())
             return
-        if text in ("Help", "/help"):
+
+        if text in ("help", "/help"):
             await update.message.reply_text(
                 SHOP_NAME + "\n\n"
                 "Browse Categories — shop by department\n"
-                "Weekly Asbeza — build a grocery basket\n"
-                "View Cart / Checkout — finish your order\n"
-                "Visit Website — open the online shop\n\n"
-                "Payment: Cash on Delivery in Addis Ababa.",
+                "Weekly Asbeza — grocery basket\n"
+                "View Cart / Checkout — order\n"
+                "Visit Website — online shop\n\n"
+                "Payment: Cash on Delivery.\n"
+                "Send /cancel to stop checkout.",
                 reply_markup=reply_main_keyboard(),
             )
             return
-        await update.message.reply_text(
-            "Use the bottom menu buttons.",
-            reply_markup=reply_main_keyboard(),
-        )
-        await update.message.reply_text(
-            "Quick menu:",
-            reply_markup=main_menu_keyboard(chat_id),
-        )
-        return
 
-    if state.get("stage") == "name":
-        state["name"] = text
-        state["stage"] = "address"
-        loc_kb = ReplyKeyboardMarkup(
-            [
-                [KeyboardButton("Share my location", request_location=True)],
-                [KeyboardButton("Skip — type address instead")],
-            ],
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        )
-        await update.message.reply_text(
-            "Thanks, " + text + ".\n\n"
-            "Send your delivery address in Addis Ababa,\n"
-            "or tap Share my location.",
-            reply_markup=loc_kb,
-        )
-        return
-
-    if state.get("stage") == "address":
-        if text.startswith("Skip"):
+        # Checkout stages
+        state = checkout_state.get(chat_id)
+        if not state:
             await update.message.reply_text(
-                "Please type your delivery address in Addis Ababa.",
-                reply_markup=ReplyKeyboardRemove(),
+                "I got: " + raw[:50] + "\n\n"
+                "Please tap: Browse Categories | Weekly Asbeza | View Cart | Website",
+                reply_markup=reply_main_keyboard(),
             )
             return
-        state["address"] = text
-        state["stage"] = "contact"
-        kb = ReplyKeyboardMarkup(
-            [[KeyboardButton("Share my phone number", request_contact=True)]],
-            resize_keyboard=True,
-            one_time_keyboard=True,
-        )
-        await update.message.reply_text(
-            "Please share your phone number (or type it).",
-            reply_markup=kb,
-        )
-        return
 
-    if state.get("stage") == "contact":
-        state["contact"] = text
-        await finish_checkout(update, context, chat_id)
-        return
+        original = (update.message.text or "").strip()
+
+        if state.get("stage") == "name":
+            state["name"] = original
+            state["stage"] = "address"
+            loc_kb = ReplyKeyboardMarkup(
+                [
+                    [KeyboardButton("Share my location", request_location=True)],
+                    [KeyboardButton("Skip — type address instead")],
+                ],
+                resize_keyboard=True,
+                one_time_keyboard=True,
+            )
+            await update.message.reply_text(
+                "Thanks, " + original + ".\n\n"
+                "Send your delivery address in Addis Ababa,\n"
+                "or tap Share my location.",
+                reply_markup=loc_kb,
+            )
+            return
+
+        if state.get("stage") == "address":
+            if original.startswith("Skip"):
+                await update.message.reply_text(
+                    "Please type your delivery address in Addis Ababa.",
+                    reply_markup=ReplyKeyboardRemove(),
+                )
+                return
+            state["address"] = original
+            state["stage"] = "contact"
+            kb = ReplyKeyboardMarkup(
+                [[KeyboardButton("Share my phone number", request_contact=True)]],
+                resize_keyboard=True,
+                one_time_keyboard=True,
+            )
+            await update.message.reply_text(
+                "Please share your phone number (or type it).",
+                reply_markup=kb,
+            )
+            return
+
+        if state.get("stage") == "contact":
+            state["contact"] = original
+            await finish_checkout(update, context, chat_id)
+            return
+
+        checkout_state.pop(chat_id, None)
+        await update.message.reply_text(
+            "Please use the menu.",
+            reply_markup=reply_main_keyboard(),
+        )
+    except Exception as e:
+        logger.exception("on_text error: %s", e)
+        try:
+            await update.message.reply_text(
+                "Something went wrong. Send /start and try again.",
+                reply_markup=reply_main_keyboard(),
+            )
+        except Exception:
+            pass
 
 
 async def on_location(update, context):
+
+
     chat_id = update.effective_chat.id
     state = checkout_state.get(chat_id)
     if not state or state.get("stage") != "address":
