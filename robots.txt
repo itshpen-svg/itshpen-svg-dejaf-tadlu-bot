@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://dejaf-tadlu-onlineshopping.netlify.app/sitemap.xml
+Sitemap: https://dejaf-tadlu-onlinshopping.netlify.app/sitemap.xml
