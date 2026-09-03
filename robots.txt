@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dejaf-tadlu-onlineshopping.netlify.app/sitemap.xml
