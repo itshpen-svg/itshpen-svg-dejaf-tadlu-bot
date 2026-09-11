@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+0<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -537,7 +537,8 @@
   .packages-asbeza .card-img.has-carousel{ height:220px; min-height:220px; }
 
   .card-img{
-    height:190px;
+    height: 280px;
+    min-height:280px:
     display:flex;
     align-items:center;
     justify-content:center;
@@ -593,7 +594,7 @@
   .thumb .icon-badge svg{ width:22px; height:22px; }
   .card-img img{
     width:100%; height:100%;
-    object-fit:cover;
+    object-fit:contain;
     display:block;
   }
   .tag-hole{
@@ -605,11 +606,12 @@
     border:1px solid var(--line);
   }
   .card-body{
-    padding:14px 16px 16px;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-    flex:1;
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
   }
   .card-cat{
     font-family:'JetBrains Mono', monospace;
@@ -621,16 +623,22 @@
   .card-name{
     font-family:'Fraunces', serif;
     font-weight:600;
-    font-size:16px;
+    font-size:14px;
+    margin: 2px 0 4px;
     color:var(--ink);
     line-height:1.3;
   }
   .card-desc{
-    font-size:12.5px;
-    color:#85756a;
-    line-height:1.45;
-    flex:1;
-  }
+  font-size: 12px;
+  line-height: 1.35;
+  color: #8a7a6c;
+  margin: 0 0 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 2.7em;
+}
   .card-footer{
     display:flex;
     align-items:center;
