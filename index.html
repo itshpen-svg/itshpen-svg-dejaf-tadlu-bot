@@ -1876,7 +1876,21 @@
           show(Number(dot.dataset.i || 0));
         });
       });
+    // Auto-move images every 3.5s
+    let timer = setInterval(() => {
+      const cur = Number(car.dataset.idx || 0);
+      show(cur + 1);
+    }, 3500);
 
+    car.addEventListener('mouseenter', () => clearInterval(timer));
+    car.addEventListener('mouseleave', () => {
+      clearInterval(timer);
+      timer = setInterval(() => {
+        const cur = Number(car.dataset.idx || 0);
+        show(cur + 1);
+      }, 3500);
+    });
+    car.addEventListener('touchstart', () => clearInterval(timer), { passive: true });
       // Swipe with distance + velocity detection
       // Quick flick (high velocity) can change slide with less distance;
       // slow drag needs a longer swipe.
