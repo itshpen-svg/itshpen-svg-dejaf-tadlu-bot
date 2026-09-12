@@ -2046,11 +2046,7 @@
     const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
     asbezaGrid.innerHTML = '';
     giftsGrid.innerHTML = '';
-    asbeza.forEach(p=>{
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = cardHTML(p);
-      asbezaGrid.appendChild(card);
+    asbezaGrid.innerHTML = '';
     });
     gifts.forEach(p=>{
       const card = document.createElement('div');
