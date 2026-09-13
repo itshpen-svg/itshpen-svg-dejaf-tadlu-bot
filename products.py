@@ -2,7 +2,7 @@
 # Amharic labels stay on the website.
 
 PRODUCTS = [
-  { id: 1, name: 'Yirgacheffe Coffee Beans, 250g', cat: 'Coffee & Tea', price: 380, sale: null, img: 'photo/1.jpg', desc: 'Premium Yirgacheffe coffee beans.' },
+  { id: 1, name: 'Yirgacheffe Coffee Beans, 250g', cat: 'Coffee & Tea', price: 380, sale: None, photo: 'photo/1.jpg', desc: 'Premium Yirgacheffe coffee beans.' },
 
   // Books & Paper
   { id: 13, name: 'Amharic Children\'s Storybook Set', cat: 'Books & Paper', price: 260, sale: null, img: 'photo/13.jpg', desc: 'Three illustrated folktales, printed in Amharic.' },
