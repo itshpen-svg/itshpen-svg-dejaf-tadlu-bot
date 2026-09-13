@@ -2,9 +2,9 @@
 # Amharic labels stay on the website.
 
 PRODUCTS = [
-  { id: 1, name: 'Yirgacheffe Coffee Beans, 250g', cat: 'Coffee & Tea', price: 380, sale: None, photo: 'photo/1.jpg', desc: 'Premium Yirgacheffe coffee beans.' },
-  { id: 13, name: 'Amharic Children\'s Storybook Set', cat: 'Books & Paper', price: 260, sale: null, img: 'photo/13.jpg', desc: 'Three illustrated folktales, printed in Amharic.' },
-  { id: 14, name: 'Frankincense & Myrrh Set', cat: 'Home & Garden', price: 180, sale: null, img: 'photo/14.jpg', desc: 'Ethiopian etan resin with a traditional clay burner.' },
+  {"id": 1, "name": "Yirgacheffe Coffee Beans, 250g", "cat": "Coffee & Tea", "price": 380, "sale": None, "photo": "1.jpg", "desc": "Premium Yirgacheffe coffee beans."},
+  {"id": 13, "name": "Amharic Children's Storybook Set", "cat": "Books & Paper", "price": 260, "sale": None, "photo": "13.jpg", "desc": "Three illustrated folktales, printed in Amharic."},
+  {"id": 14, "name": "Frankincense & Myrrh Set", "cat": "Home & Garden", "price": 180, "sale": None, "photo": "14.jpg", "desc": "Ethiopian etan resin with a traditional clay burner."},
   { id: 17, name: 'Woven Mesob Basket', cat: 'Home & Garden', price: 1400, sale: null, img: 'photo/17.jpg', desc: 'Handwoven grass basket-table for serving injera.' },
   { id: 19, name: 'Teff Flour, 5kg', cat: 'Grocery', price: 620, sale: null, img: 'photo/19.jpg', desc: 'Whole-grain teff, stone-milled for authentic injera.' },
   { id: 20, name: 'Fresh Avocados, 1kg Bag', cat: 'Grocery', price: 110, sale: null, img: 'photo/20.jpg', desc: 'Locally grown, ready to eat within a day or two.' },
