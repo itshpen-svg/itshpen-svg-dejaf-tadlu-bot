@@ -3,15 +3,9 @@
 
 PRODUCTS = [
   { id: 1, name: 'Yirgacheffe Coffee Beans, 250g', cat: 'Coffee & Tea', price: 380, sale: None, photo: 'photo/1.jpg', desc: 'Premium Yirgacheffe coffee beans.' },
-
-  // Books & Paper
   { id: 13, name: 'Amharic Children\'s Storybook Set', cat: 'Books & Paper', price: 260, sale: null, img: 'photo/13.jpg', desc: 'Three illustrated folktales, printed in Amharic.' },
-
-  // Home & Garden
   { id: 14, name: 'Frankincense & Myrrh Set', cat: 'Home & Garden', price: 180, sale: null, img: 'photo/14.jpg', desc: 'Ethiopian etan resin with a traditional clay burner.' },
   { id: 17, name: 'Woven Mesob Basket', cat: 'Home & Garden', price: 1400, sale: null, img: 'photo/17.jpg', desc: 'Handwoven grass basket-table for serving injera.' },
-
-  // Grocery
   { id: 19, name: 'Teff Flour, 5kg', cat: 'Grocery', price: 620, sale: null, img: 'photo/19.jpg', desc: 'Whole-grain teff, stone-milled for authentic injera.' },
   { id: 20, name: 'Fresh Avocados, 1kg Bag', cat: 'Grocery', price: 110, sale: null, img: 'photo/20.jpg', desc: 'Locally grown, ready to eat within a day or two.' },
   { id: 21, name: 'Shiro Powder (ሽሮ), 500g', cat: 'Grocery', price: 170, sale: null, img: 'photo/21.jpg', desc: 'Roasted chickpea flour blend, ready for shiro wat.' },
@@ -31,29 +25,21 @@ PRODUCTS = [
   { id: 54, name: 'Difen Misir (ድፍን ምስር), 1kg', cat: 'Grocery', price: 200, sale: null, img: 'photo/54.jpg', desc: 'Whole red lentils for shiro, stews, and soups.' },
   { id: 55, name: 'Split Misir (ምስር ክክ), 1kg', cat: 'Grocery', price: 210, sale: null, img: 'photo/55.jpg', desc: 'Split red lentils — cooks faster for everyday misir wot.' },
   { id: 56, name: 'Split Ater (አተር ክክ), 1kg', cat: 'Grocery', price: 190, sale: null, img: 'photo/56.jpg', desc: 'Split peas for ater kik wot and hearty stews.' },
-  { id: 57, name: 'Peanut Butter (የለውዝ ቅቤ), 500g', cat: 'Grocery', price: 280, sale: null, img: 'photo/57.jpg', desc: 'Smooth peanut butter for bread, snacks, and cooking.' },
-
-  // Beauty & Cosmetics
+  { id: 57, name: 'Peanut Butter (የለውዝ ቅቤ), 500g', cat: 'Grocery', price: 280, sale: null, img: 'photo/57.jpg', desc: 'Smooth peanut butter for bread, snacks, and cooking.' }.
   { id: 23, name: 'Shea Butter Body Cream', cat: 'Beauty & Cosmetics', price: 240, sale: null, img: 'photo/23.jpg', desc: 'Whipped shea butter, unscented, for dry skin.' },
   { id: 24, name: 'Natural Henna Powder, 100g', cat: 'Beauty & Cosmetics', price: 130, sale: null, img: 'photo/24.jpg', desc: 'Pure henna leaf powder for hair and skin art.' },
   { id: 25, name: 'Matte Lipstick Set', cat: 'Beauty & Cosmetics', price: 390, sale: null, img: 'photo/25.jpg', desc: 'Three long-wear shades in a compact travel case.' },
   { id: 41, name: 'Eau de Parfum, For Women', cat: 'Beauty & Cosmetics', price: 950, sale: null, img: 'photo/41.jpg', desc: 'Eau de Parfum for women.' },
   { id: 42, name: 'Eau de Parfum, For Men, 50ml', cat: 'Beauty & Cosmetics', price: 850, sale: null, img: 'photo/42.jpg', desc: 'Eau de Parfum for men, 50ml.' },
-
-  // Electrical Equipment
   { id: 26, name: 'Voltage Stabilizer, 1000VA', cat: 'Electrical Equipment', price: 1850, sale: null, img: 'photo/26.jpg', desc: 'Protects appliances from Addis Ababa\'s voltage swings.' },
   { id: 27, name: 'LED Bulb Pack, 4 x 9W', cat: 'Electrical Equipment', price: 340, sale: null, img: 'photo/27.jpg', desc: 'Energy-saving daylight bulbs, standard E27 base.' },
   { id: 28, name: 'Rechargeable Emergency Lamp', cat: 'Electrical Equipment', price: 590, sale: null, img: 'photo/28.jpg', desc: 'Backup lighting with a 6-hour runtime, USB charging.' },
-
-  // Apparel
   { id: 38, name: 'Kids Pajama Set, Assorted Prints', cat: 'Apparel', price: 480, sale: null, img: 'photo/38.jpg', desc: 'Kids pajama set, assorted prints.' },
   { id: 39, name: 'Kids Pajama Pants, Assorted Prints', cat: 'Apparel', price: 260, sale: null, img: 'photo/39.jpg', desc: 'Kids pajama pants, assorted prints.' },
   { id: 40, name: 'Girls Leggings, Navy & Lilac', cat: 'Apparel', price: 320, sale: null, img: 'photo/40.jpg', desc: 'Girls leggings in navy and lilac.' },
   { id: 43, name: 'Men\'s Pullover Hoodie', cat: 'Apparel', price: 900, sale: null, img: 'photo/43.jpg', desc: 'Men\'s pullover hoodie.' },
   { id: 44, name: 'Men\'s Pique Polo Shirt', cat: 'Apparel', price: 650, sale: null, img: 'photo/44.jpg', desc: 'Men\'s pique polo shirt.' },
   { id: 45, name: 'Men\'s Boxer Shorts, Assorted Patterns (6-Pack)', cat: 'Apparel', price: 780, sale: null, img: 'photo/45.jpg', desc: 'Men\'s boxer shorts, 6-pack.' },
-
-  // Gift Packages
   { id: 46, name: 'Executive Gift Box', cat: 'Gift Packages', price: 3000, sale: null, img: 'photo/46.jpg', desc: 'Executive gift box.' },
   { id: 47, name: 'Birthday Gift Box', cat: 'Gift Packages', price: 3500, sale: null, img: 'photo/47.jpg', desc: 'Birthday gift box.' },
   { id: 48, name: 'Celebration Gift Box', cat: 'Gift Packages', price: 4000, sale: null, img: 'photo/48.jpg', desc: 'Celebration gift set — notebook, bottle/thermos and cards. Custom name available.' },
