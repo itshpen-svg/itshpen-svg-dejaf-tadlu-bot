@@ -1,5 +1,5 @@
 """
-Dejaf Tadlu - Telegram Ordering Bot
+Dejaf Tadlu ደጃፍ ታደሉ - Telegram Ordering Bot
 Browse catalog, cart, checkout. Order summary goes to shop owner.
 """
 
