@@ -27,7 +27,7 @@ PRODUCTS = [
     {"id": 54, "name": "Difen Misir (ድፍን ምስር), 1kg", "cat": "Grocery", "price": 200, "sale": None, "photo": "photos/54.jpg", "builder": False},
     {"id": 55, "name": "Split Misir (ምስር ክክ), 1kg", "cat": "Grocery", "price": 210, "sale": None, "photo": "photos/55.jpg", "builder": False},
     {"id": 56, "name": "Split Ater (አተር ክክ), 1kg", "cat": "Grocery", "price": 190, "sale": None, "photo": "photos/56.jpg", "builder": False},
-    {"id": 57, "name": "Peanut Butter (የለውዝ ቅቤ), 500g", "cat": "Grocery", "price": 280, "sale": None, "photo": "photos/57.jpg", "builder": False},
+    {"id": 60, "name": "Peanut Butter (የለውዝ ቅቤ), 500g", "cat": "Grocery", "price": 280, "sale": None, "photo": "photos/60.jpg", "builder": False},
     {"id": 23, "name": "Shea Butter Body Cream", "cat": "Beauty & Cosmetics", "price": 240, "sale": None, "photo": "photos/23.jpg", "builder": False},
     {"id": 24, "name": "Natural Henna Powder, 100g", "cat": "Beauty & Cosmetics", "price": 130, "sale": None, "photo": "photos/24.jpg", "builder": False},
     {"id": 25, "name": "Matte Lipstick Set", "cat": "Beauty & Cosmetics", "price": 390, "sale": None, "photo": "photos/25.jpg", "builder": False},
