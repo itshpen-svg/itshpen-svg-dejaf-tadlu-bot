@@ -45,7 +45,7 @@ PRODUCTS = [
     {"id": 46, "name": "Executive Gift Box", "cat": "Gift Packages", "price": 3000, "sale": None, "photo": "photos/46.jpg", "builder": False},
     {"id": 47, "name": "Birthday Gift Box", "cat": "Gift Packages", "price": 3500, "sale": None, "photo": "photos/47.jpg", "builder": False},
     {"id": 48, "name": "Celebration Gift Box", "cat": "Gift Packages", "price": 4000, "sale": None, "photo": "photos/48.jpg", "builder": False},
-    { id": 2,  "name":  "Black seeds oil", For Healthy , 250ml', "cat":  "Beauty & Cosmetics", "price": 1200,  "sale": None,  "photo":  "photos/2.jpg",  "photo2":  "photos/2a.jpg",},
+    {"id": 2, "name": "Black seeds For Healthy", "cat": "Beauty & Cosmetics", "price": 1200, "sale": None, "photo": "photos/2.jpg", "builder": False},
 ]
 
 CATEGORIES = sorted(set(p['cat'] for p in PRODUCTS))
