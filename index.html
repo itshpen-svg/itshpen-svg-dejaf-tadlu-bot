@@ -1338,14 +1338,172 @@
       </a>
     </div>
     <div class="delivery-note">🚚 We deliver in all of Addis Ababa</div>
+  <!-- ==================== HOW TO ORDER (Movie Style) ==================== -->
+<section class="order-guide">
+  <div class="guide-header">
+    <span class="guide-tag">How It Works</span>
+    <h2>Your Order Journey</h2>
+    <p class="guide-subtitle">Simple. Fast. Delivered to your door.</p>
   </div>
-  <div class="ledger-card">
-    <div class="head">Today's Ledger</div>
-    <div class="row"><span>Departments open</span><span id="ledgerDepts">—</span></div>
-    <div class="row"><span>Items in stock</span><span id="ledgerItems">—</span></div>
-    <div class="row"><span>On sale today</span><span id="ledgerSale">—</span></div>
-    <div class="row"><span>Avg. rating</span><span>4.8 / 5</span></div>
+
+  <div class="guide-steps">
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-number">01</div>
+      <div class="step-content">
+        <h3>Browse & Choose</h3>
+        <p>Scroll through fresh groceries, apparel, and gifts. Tap any item you love.</p>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-number">02</div>
+      <div class="step-content">
+        <h3>Add to Cart</h3>
+        <p>Press the <strong>Add</strong> button. Your cart updates instantly.</p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-number">03</div>
+      <div class="step-content">
+        <h3>Review Your Cart</h3>
+        <p>Open the cart, check quantities, and remove anything you don’t need.</p>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-number">04</div>
+      <div class="step-content">
+        <h3>Checkout</h3>
+        <p>Enter your name, phone number, and delivery location in Addis Ababa.</p>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-number">05</div>
+      <div class="step-content">
+        <h3>Confirm & Pay</h3>
+        <p>Choose payment method and confirm. We’ll call you to verify the order.</p>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step">
+      <div class="step-number">06</div>
+      <div class="step-content">
+        <h3>Sit Back & Wait</h3>
+        <p>Your order is on the way. We’ll notify you when it’s near.</p>
+      </div>
+    </div>
   </div>
+
+  <div class="guide-footer">
+    <p>Need help? Call or Telegram us anytime.</p>
+  </div>
+</section>
+
+<style>
+  .order-guide {
+    background: linear-gradient(180deg, #f8f1e3 0%, #f3e9d7 100%);
+    padding: 40px 20px 50px;
+    font-family: system-ui, -apple-system, sans-serif;
+    color: #2c1e12;
+  }
+
+  .guide-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .guide-tag {
+    display: inline-block;
+    background: #3d2b1f;
+    color: #f8f1e3;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+  }
+
+  .guide-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: #2c1e12;
+  }
+
+  .guide-subtitle {
+    font-size: 15px;
+    color: #6b5344;
+    margin: 0;
+  }
+
+  .guide-steps {
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .step {
+    display: flex;
+    gap: 16px;
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px 16px;
+    box-shadow: 0 4px 16px rgba(60, 40, 20, 0.08);
+    align-items: flex-start;
+    transition: transform 0.2s ease;
+  }
+
+  .step:hover {
+    transform: translateY(-2px);
+  }
+
+  .step-number {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    background: #3d2b1f;
+    color: #f8f1e3;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step-content h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #2c1e12;
+  }
+
+  .step-content p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #5c4a3a;
+  }
+
+  .guide-footer {
+    text-align: center;
+    margin-top: 32px;
+    font-size: 14px;
+    color: #6b5344;
+  }
+</style>
 </section>
 
 <div class="cat-rail" id="catRail"></div>
