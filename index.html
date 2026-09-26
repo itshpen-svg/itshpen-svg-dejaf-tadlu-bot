@@ -2125,21 +2125,20 @@
       return matchesCat && matchesSearch && matchesMin && matchesMax && matchesSale;
     });
     return sortItems(items);
+ function sortItems(items){
+  const sorted = items.slice();
+  if(sortMode === 'price-low'){
+    sorted.sort((a,b) => (a.sale||a.price) - (b.sale||b.price));
+  } else if(sortMode === 'price-high'){
+    sorted.sort((a,b) => (b.sale||b.price) - (a.sale||a.price));
+  } else if(sortMode === 'newest'){
+    sorted.sort((a,b) => b.id - a.id);
+  } else {
+    // Keep the original order from PRODUCTS array
+    return sorted;
   }
-
-  function sortItems(items){
-    const sorted = items.slice();
-    if(sortMode === 'price-low'){
-      sorted.sort((a,b) => (a.sale||a.price) - (b.sale||b.price));
-    } else if(sortMode === 'price-high'){
-      sorted.sort((a,b) => (b.sale||b.price) - (a.sale||a.price));
-    } else if(sortMode === 'newest'){
-      sorted.sort((a,b) => b.id - a.id);
-    } else {
-      // Featured: Weekly Asbeza first, Gift Packages directly under it, then the rest
-      const rank = (p) => p.builder ? 0 : (p.cat === 'Gift Packages' ? 1 : 2);
-      sorted.sort((a,b) => rank(a) - rank(b) || a.id - b.id);
-    }
+  return sorted;
+}
     return sorted;
   }
 
