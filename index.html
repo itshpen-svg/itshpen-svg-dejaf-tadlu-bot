@@ -2342,36 +2342,47 @@
     });
     bindCardControls(strip);
     bindPhotoCarousels(strip);
+  function renderPackages(){
+  const strip = document.getElementById('packagesStrip');
+  const asbezaGrid = document.getElementById('asbezaGrid');
+  const giftsGrid = document.getElementById('giftsGrid');
+  if(!strip) return;
+
+  if(!showPackagesStrip()){
+    strip.classList.add('hidden');
+    asbezaGrid.innerHTML = '';
+    giftsGrid.innerHTML = '';
+    return;
   }
 
-  function renderGrid(){
-    let items = getFiltered();
-    if(showPackagesStrip()){
-      items = items.filter(p => !p.builder && p.cat !== 'Gift Packages');
-    }
-    catalogTitle.textContent = activeCategory === 'All' ? 'All departments' : activeCategory;
-    resultCount.textContent = items.length + (items.length === 1 ? ' item' : ' items');
-    grid.innerHTML = '';
-    renderPackages();
+  strip.classList.remove('hidden');
 
-    if(items.length === 0){
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-        <div class="glyph">🔍</div>
-        <div>Nothing on the shelf matches that search.</div>
-      </div>`;
-      return;
-    }
+  const asbeza = PRODUCTS.filter(p => p.builder);
+  const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
 
-    items.forEach(p=>{
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = cardHTML(p);
-      grid.appendChild(card);
-    });
+  // Clear both grids
+  asbezaGrid.innerHTML = '';
+  giftsGrid.innerHTML = '';
 
-    bindCardControls(grid);
-    bindPhotoCarousels(grid);
-  }
+  // Render Weekly Asbeza
+  asbeza.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = cardHTML(p);
+    asbezaGrid.appendChild(card);
+  });
+
+  // Render Gift Packages
+  gifts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = cardHTML(p);
+    giftsGrid.appendChild(card);
+  });
+
+  bindCardControls(strip);
+  bindPhotoCarousels(strip);
+}
 
   // ===== Search =====
   const searchSuggestions = document.getElementById('searchSuggestions');
