@@ -2318,36 +2318,46 @@
   }
 
   function renderPackages(){
-    const strip = document.getElementById('packagesStrip');
-    const asbezaGrid = document.getElementById('asbezaGrid');
-    const giftsGrid = document.getElementById('giftsGrid');
-    if(!strip) return;
-    if(!showPackagesStrip()){
-      strip.classList.add('hidden');
-      asbezaGrid.innerHTML = '';
-      giftsGrid.innerHTML = '';
-      return;
-    }
-    strip.classList.remove('hidden');
-    const asbeza = PRODUCTS.filter(p => p.builder);
-    const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
-    asbezaGrid.innerHTML = '';
-    giftsGrid.innerHTML = '';
-    asbezaGrid.innerHTML = '';
-    gifts.forEach(p=>{
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = cardHTML(p);
-      giftsGrid.appendChild(card);
-    });
-    bindCardControls(strip);
-    bindPhotoCarousels(strip);
-  }
-  function renderPackages(){
   const strip = document.getElementById('packagesStrip');
   const asbezaGrid = document.getElementById('asbezaGrid');
   const giftsGrid = document.getElementById('giftsGrid');
   if(!strip) return;
+
+  if(!showPackagesStrip()){
+    strip.classList.add('hidden');
+    asbezaGrid.innerHTML = '';
+    giftsGrid.innerHTML = '';
+    return;
+  }
+
+  strip.classList.remove('hidden');
+
+  const asbeza = PRODUCTS.filter(p => p.builder);
+  const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
+
+  // Clear both grids
+  asbezaGrid.innerHTML = '';
+  giftsGrid.innerHTML = '';
+
+  // Render Weekly Asbeza
+  asbeza.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = cardHTML(p);
+    asbezaGrid.appendChild(card);
+  });
+
+  // Render Gift Packages
+  gifts.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = cardHTML(p);
+    giftsGrid.appendChild(card);
+  });
+
+  bindCardControls(strip);
+  bindPhotoCarousels(strip);
+}
 
   if(!showPackagesStrip()){
     strip.classList.add('hidden');
