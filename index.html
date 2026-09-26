@@ -2361,18 +2361,6 @@
   const asbeza = PRODUCTS.filter(p => p.builder);
   const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
 
-  // Clear both grids
-  asbezaGrid.innerHTML = '';
-  giftsGrid.innerHTML = '';
-
-  // Render Weekly Asbeza
-  asbeza.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = cardHTML(p);
-    asbezaGrid.appendChild(card);
-  });
-
   // Render Gift Packages
   gifts.forEach(p => {
     const card = document.createElement('div');
