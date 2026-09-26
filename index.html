@@ -2315,8 +2315,6 @@
         });
       });
     });
-  }
-
   function renderPackages(){
   const strip = document.getElementById('packagesStrip');
   const asbezaGrid = document.getElementById('asbezaGrid');
@@ -2335,7 +2333,6 @@
   const asbeza = PRODUCTS.filter(p => p.builder);
   const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
 
-  // Clear both grids
   asbezaGrid.innerHTML = '';
   giftsGrid.innerHTML = '';
 
@@ -2358,13 +2355,6 @@
   bindCardControls(strip);
   bindPhotoCarousels(strip);
 }
-
-  if(!showPackagesStrip()){
-    strip.classList.add('hidden');
-    asbezaGrid.innerHTML = '';
-    giftsGrid.innerHTML = '';
-    return;
-  }
 
   strip.classList.remove('hidden');
 
