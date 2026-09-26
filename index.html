@@ -2315,63 +2315,76 @@
         });
       });
     });
-  function renderPackages(){
-  const strip = document.getElementById('packagesStrip');
-  const asbezaGrid = document.getElementById('asbezaGrid');
-  const giftsGrid = document.getElementById('giftsGrid');
-  if(!strip) return;
-
-  if(!showPackagesStrip()){
-    strip.classList.add('hidden');
-    asbezaGrid.innerHTML = '';
-    giftsGrid.innerHTML = '';
-    return;
+    function bindCardControls(root){
+    root.querySelectorAll('.add-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const id = Number(e.currentTarget.dataset.id);
+        addToCart(id);
+      });
+    });
+    root.querySelectorAll('.card-stepper').forEach(stepper=>{
+      const id = Number(stepper.dataset.id);
+      stepper.querySelectorAll('.card-step-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const action = e.currentTarget.dataset.action;
+          changeQty(id, action === 'inc' ? 1 : -1);
+        });
+      });
+    });
+    root.querySelectorAll('.kg-add-btn').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const id = Number(e.currentTarget.dataset.id);
+        const row = e.currentTarget.closest('.kg-input-row');
+        const input = row.querySelector('.kg-input');
+        const amount = parseFloat(input.value);
+        if(!amount || amount <= 0){
+          input.focus();
+          return;
+        }
+        cart[id] = amount;
+        updateCartUI();
+      });
+    });
   }
 
-  strip.classList.remove('hidden');
+  function renderPackages(){
+    const strip = document.getElementById('packagesStrip');
+    const asbezaGrid = document.getElementById('asbezaGrid');
+    const giftsGrid = document.getElementById('giftsGrid');
+    if(!strip) return;
 
-  const asbeza = PRODUCTS.filter(p => p.builder);
-  const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
+    if(!showPackagesStrip()){
+      strip.classList.add('hidden');
+      asbezaGrid.innerHTML = '';
+      giftsGrid.innerHTML = '';
+      return;
+    }
 
-  asbezaGrid.innerHTML = '';
-  giftsGrid.innerHTML = '';
+    strip.classList.remove('hidden');
 
-  // Render Weekly Asbeza
-  asbeza.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = cardHTML(p);
-    asbezaGrid.appendChild(card);
-  });
+    const asbeza = PRODUCTS.filter(p => p.builder);
+    const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
 
-  // Render Gift Packages
-  gifts.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = cardHTML(p);
-    giftsGrid.appendChild(card);
-  });
+    asbezaGrid.innerHTML = '';
+    giftsGrid.innerHTML = '';
 
-  bindCardControls(strip);
-  bindPhotoCarousels(strip);
-}
+    asbeza.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = cardHTML(p);
+      asbezaGrid.appendChild(card);
+    });
 
-  strip.classList.remove('hidden');
+    gifts.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = cardHTML(p);
+      giftsGrid.appendChild(card);
+    });
 
-  const asbeza = PRODUCTS.filter(p => p.builder);
-  const gifts = PRODUCTS.filter(p => p.cat === 'Gift Packages');
-
-  // Render Gift Packages
-  gifts.forEach(p => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = cardHTML(p);
-    giftsGrid.appendChild(card);
-  });
-
-  bindCardControls(strip);
-  bindPhotoCarousels(strip);
-}
+    bindCardControls(strip);
+    bindPhotoCarousels(strip);
+  }
 
   // ===== Search =====
   const searchSuggestions = document.getElementById('searchSuggestions');
