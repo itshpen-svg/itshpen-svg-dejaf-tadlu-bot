@@ -1550,102 +1550,232 @@
     background: repeating-linear-gradient(
       90deg,
       #3d2b1f 0px,
-      #3d2b1f 12px,
-      #1a120b 12px,
-      #1a120b 20px
-    );
-    margin-bottom: 28px;
-    opacity: 0.7;
+<!-- ==================== CINEMATIC GUIDE + ETHIOPIAN GOODS ==================== -->
+<section class="movie-section">
+  <div class="guide-wrapper">
+    
+    <!-- Left side: Video -->
+    <div class="movie-container" id="movieContainer">
+      
+      <!-- Golden Loading -->
+      <div class="loading-overlay" id="loadingOverlay">
+        <div class="golden-spinner"></div>
+        <p class="loading-text">Loading Guide...</p>
+      </div>
+
+      <video 
+        id="guideVideo"
+        src="order-guide.mp4" 
+        playsinline
+        preload="auto"
+        class="guide-video">
+      </video>
+
+      <!-- Play Overlay -->
+      <div class="play-overlay" id="playOverlay">
+        <div class="play-button">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="8,5 20,12 8,19"/>
+          </svg>
+        </div>
+        <p class="play-text">Watch How to Order</p>
+      </div>
+    </div>
+
+    <!-- Right side: Ethiopian Goods Text -->
+    <div class="goods-text">
+      <p class="goods-label">Ethiopia’s Goods, Delivered with Care</p>
+      
+      <p class="amharic">
+        ከይርጋቸፌ ትኩስ ቡና፣ በባለሙያዎች የተዘጋጀ የባልትና ውጤቶች፣ የዕለት ምግብ፣ የውበት መጠበቂያ እቃዎች እና የቤት መሠረታዊ እቃዎች — ደጃፍ ታደሉ ገበያውን ወደ ቤትዎ ያመጣል፣ በአዲስ አበባ በየትኛውም ቦታ።
+      </p>
+
+      <p class="english">
+        Fresh Yirgacheffe coffee, expertly prepared spices & pantry goods, daily groceries, beauty care, and home basics — Dejaf Tadlu brings the market to your door, anywhere in Addis Ababa.
+      </p>
+    </div>
+
+  </div>
+</section>
+
+<style>
+  .movie-section {
+    background: #0a0a0a;
+    padding: 40px 20px 50px;
   }
 
-  .movie-label {
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: #c4a574;
-    margin: 0 0 12px;
-    text-transform: uppercase;
-  }
-
-  .movie-title {
-    font-size: 36px;
-    font-weight: 800;
-    margin: 0 0 10px;
-    color: #f5e6c8;
-    letter-spacing: -0.5px;
-  }
-
-  .movie-tagline {
-    font-size: 15px;
-    color: #a89070;
-    margin: 0;
-    font-style: italic;
-  }
-
-  .scenes {
-    max-width: 420px;
+  .guide-wrapper {
+    max-width: 960px;
     margin: 0 auto;
     display: flex;
+    gap: 32px;
+    align-items: center;
+  }
+
+  /* Video */
+  .movie-container {
+    position: relative;
+    flex: 1;
+    max-width: 420px;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(212, 175, 55, 0.3);
+    border: 1px solid #d4af37;
+    cursor: pointer;
+    background: #000;
+    min-height: 240px;
+  }
+
+  .guide-video {
+    width: 100%;
+    height: auto;
+    display: block;
+    background: #000;
+  }
+
+  /* Loading */
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: #0a0a0a;
+    display: flex;
     flex-direction: column;
-    gap: 20px;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: opacity 0.4s ease;
+  }
+  .loading-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .golden-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(212, 175, 55, 0.2);
+    border-top: 3px solid #d4af37;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .loading-text {
+    margin-top: 16px;
+    color: #d4af37;
+    font-size: 14px;
+    letter-spacing: 1px;
   }
 
-  .scene {
-    background: #2a1f15;
-    border: 1px solid #3d2b1f;
-    border-radius: 16px;
-    padding: 24px 20px;
-    text-align: left;
-    transition: transform 0.25s ease, border-color 0.25s ease;
+  /* Play Button */
+  .play-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.35s ease;
+    z-index: 5;
+  }
+  .play-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .play-button {
+    width: 74px;
+    height: 74px;
+    background: linear-gradient(135deg, #d4af37, #b8962e);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(212, 175, 55, 0.5);
+    transition: transform 0.25s ease;
+  }
+  .play-button svg {
+    width: 32px;
+    height: 32px;
+    color: #111;
+    margin-left: 4px;
+  }
+  .movie-container:hover .play-button {
+    transform: scale(1.08);
+  }
+  .play-text {
+    margin-top: 16px;
+    color: #f5e6c8;
+    font-size: 15px;
+    font-weight: 600;
   }
 
-  .scene:hover {
-    transform: scale(1.02);
-    border-color: #c4a574;
-  }
-
-  .scene-number {
-    font-size: 11px;
-    letter-spacing: 2px;
-    color: #c4a574;
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-
-  .scene h3 {
-    margin: 0 0 8px;
-    font-size: 20px;
-    font-weight: 700;
+  /* Right side text */
+  .goods-text {
+    flex: 1;
     color: #f5e6c8;
   }
 
-  .scene p {
+  .goods-label {
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #d4af37;
+    margin: 0 0 18px;
+    font-weight: 600;
+  }
+
+  .amharic {
+    font-size: 16px;
+    line-height: 1.7;
+    margin: 0 0 20px;
+    color: #f0e0c0;
+  }
+
+  .english {
+    font-size: 15px;
+    line-height: 1.65;
     margin: 0;
-    font-size: 14.5px;
-    line-height: 1.5;
-    color: #d4c4a8;
+    color: #c8b890;
   }
 
-  .final-scene {
-    background: linear-gradient(135deg, #3d2b1f, #2a1f15);
-    border-color: #c4a574;
+  /* Mobile */
+  @media (max-width: 768px) {
+    .guide-wrapper {
+      flex-direction: column;
+      gap: 28px;
+    }
+    .movie-container {
+      max-width: 100%;
+    }
   }
+</style>
 
-  .movie-end {
-    margin-top: 48px;
-  }
+<script>
+  const video = document.getElementById('guideVideo');
+  const overlay = document.getElementById('playOverlay');
+  const loading = document.getElementById('loadingOverlay');
+  const container = document.getElementById('movieContainer');
 
-  .movie-end p {
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: 4px;
-    color: #c4a574;
-    margin: 0 0 8px;
-  }
+  video.addEventListener('canplay', () => {
+    loading.classList.add('hidden');
+  });
 
-  .movie-end span {
-    font-size: 14px;
-    color: #a89070;
-  }
+  container.addEventListener('click', () => {
+    if (video.paused) {
+      video.play();
+      overlay.classList.add('hidden');
+    } else {
+      video.pause();
+      overlay.classList.remove('hidden');
+    }
+  });
+
+  video.addEventListener('ended', () => {
+    overlay.classList.remove('hidden');
+    video.currentTime = 0;
+  });
+</script>
 </style>
 </section>
 
