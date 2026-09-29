@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dejaf Tadlu — Product Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Ethiopic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2B1B14; --paper:#F8EFE0; --paper-dim:#EFE1C7;
+    --gold:#C0922E; --rust:#B5482A; --green:#37613F;
+    --line:rgba(43,27,20,0.14); --shadow:0 10px 30px rgba(43,27,20,0.14);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+  h1,h2,h3{font-family:'Fraunces',serif}
+  .mono{font-family:'JetBrains Mono',monospace}
+
+  /* Login */
+  #loginScreen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  }
+  .login-box{
+    background:#fff;border:1px solid var(--line);border-radius:12px;padding:36px 32px;
+    width:100%;max-width:380px;box-shadow:var(--shadow);text-align:center;
+  }
+  .login-box h1{font-size:22px;margin-bottom:6px}
+  .login-box .sub{font-size:13px;color:#8a7a6c;margin-bottom:24px}
+  .login-box input{
+    width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:6px;
+    font-size:15px;margin-bottom:14px;font-family:inherit;
+  }
+  .login-box input:focus{outline:none;border-color:var(--gold)}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:11px 18px;border-radius:6px;font-size:14px;font-weight:600;
+    border:none;cursor:pointer;font-family:inherit;transition:.15s;
+  }
+  .btn-primary{background:var(--ink);color:var(--paper)}
+  .btn-primary:hover{background:#1c110c}
+  .btn-gold{background:var(--gold);color:#fff}
+  .btn-gold:hover{background:#a67a22}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--gold)}
+  .btn-danger{background:#fff;border:1px solid #e8b4a8;color:var(--rust)}
+  .btn-danger:hover{background:#fdf0ec}
+  .btn-sm{padding:7px 12px;font-size:12px}
+  .btn-block{width:100%}
+  .err{color:var(--rust);font-size:13px;margin-top:8px;min-height:18px}
+
+  /* Admin shell */
+  #adminApp{display:none}
+  .topbar{
+    background:var(--ink);color:var(--paper);padding:14px 20px;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  }
+  .topbar .brand{font-family:'Fraunces',serif;font-weight:700;font-size:18px}
+  .topbar .brand span{color:var(--gold);font-family:'Noto Sans Ethiopic',sans-serif;font-size:14px;margin-left:8px}
+  .topbar .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+
+  .toolbar{
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:18px;
+  }
+  .toolbar input,.toolbar select{
+    padding:9px 12px;border:1px solid var(--line);border-radius:6px;font-size:13px;
+    background:#fff;font-family:inherit;
+  }
+  .toolbar input{flex:1;min-width:160px}
+  .stats{
+    display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;
+  }
+  .stat{
+    background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 16px;min-width:110px;
+  }
+  .stat .n{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600}
+  .stat .l{font-size:11px;color:#8a7a6c;text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+
+  /* Table */
+  .table-wrap{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{
+    text-align:left;padding:11px 12px;background:var(--paper-dim);
+    font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#6b5b4d;
+    border-bottom:1px solid var(--line);
+  }
+  td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#fdfaf5}
+  .thumb{
+    width:44px;height:44px;border-radius:6px;object-fit:cover;background:var(--paper-dim);
+    border:1px solid var(--line);
+  }
+  .badge{
+    display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;
+    background:var(--paper-dim);color:#6b5b4d;
+  }
+  .badge.sale{background:#fde8e2;color:var(--rust)}
+  .badge.builder{background:#e8f0e4;color:var(--green)}
+  .row-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+  /* Modal */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(43,27,20,.45);z-index:100;
+    display:none;align-items:flex-start;justify-content:center;padding:24px 12px;overflow-y:auto;
+  }
+  .modal-bg.open{display:flex}
+  .modal{
+    background:#fff;border-radius:12px;width:100%;max-width:520px;
+    box-shadow:var(--shadow);margin:auto;border:1px solid var(--line);
+  }
+  .modal-head{
+    padding:16px 20px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .modal-head h2{font-size:18px}
+  .modal-body{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+  .modal-foot{
+    padding:14px 20px;border-top:1px solid var(--line);
+    display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;
+  }
+  .field label{
+    display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;
+    color:#8a7a6c;margin-bottom:5px;font-weight:600;
+  }
+  .field input,.field select,.field textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;
+    font-size:14px;font-family:inherit;background:#fff;
+  }
+  .field textarea{min-height:72px;resize:vertical}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.row2{grid-template-columns:1fr}}
+  .check-row{display:flex;align-items:center;gap:8px;font-size:14px}
+  .check-row input{width:16px;height:16px;accent-color:var(--gold)}
+
+  /* Export modal */
+  .code-box{
+    width:100%;min-height:220px;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+    padding:12px;border:1px solid var(--line);border-radius:6px;background:#1a120b;color:#f5e6c8;
+    resize:vertical;
+  }
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+    background:var(--ink);color:var(--paper);padding:12px 20px;border-radius:8px;
+    font-size:13px;opacity:0;transition:.25s;z-index:200;pointer-events:none;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{padding:40px 20px;text-align:center;color:#8a7a6c;font-size:14px}
+  .hint{font-size:12px;color:#8a7a6c;line-height:1.45;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>Dejaf Tadlu</h1>
+    <p class="sub">Product Admin · ደጃፍ ታደሉ</p>
+    <input type="password" id="adminPass" placeholder="Admin password" autocomplete="current-password">
+    <button class="btn btn-primary btn-block" id="loginBtn">Enter Admin</button>
+    <p class="err" id="loginErr"></p>
+    <p class="hint" style="margin-top:16px">Default password: <strong>dejaf2026</strong><br>Change it in the code after first login.</p>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminApp">
+  <div class="topbar">
+    <div class="brand">Dejaf Tadlu <span>ደጃፍ - ታደሉ</span></div>
+    <div class="actions">
+      <button class="btn btn-gold btn-sm" id="btnAdd">+ Add Product</button>
+      <button class="btn btn-ghost btn-sm" id="btnExport" style="color:#F8EFE0;border-color:rgba(248,239,224,.3)">Export Code</button>
+      <button class="btn btn-ghost btn-sm" id="btnImport" style="color:#F8EFE0;border-color:rgba(248,239,224,.3)">Import JSON</button>
+      <button class="btn btn-ghost btn-sm" id="btnLogout" style="color:#F8EFE0;border-color:rgba(248,239,224,.3)">Logout</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="stats" id="stats"></div>
+
+    <div class="toolbar">
+      <input type="search" id="searchBox" placeholder="Search name, category…">
+      <select id="filterCat">
+        <option value="">All categories</option>
+      </select>
+      <select id="filterSort">
+        <option value="id">Sort by ID</option>
+        <option value="name">Sort by Name</option>
+        <option value="price">Sort by Price</option>
+        <option value="cat">Sort by Category</option>
+      </select>
+    </div>
+
+    <div class="table-wrap">
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Photo</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Sale</th>
+              <th>Flags</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productRows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyState" style="display:none">No products yet. Click “Add Product”.</div>
+    </div>
+
+    <p class="hint" style="margin-top:16px">
+      Data is saved in this browser (localStorage). After editing, click <strong>Export Code</strong> and paste the PRODUCTS array into your <code>index.html</code>.
+    </p>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-bg" id="editModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="editTitle">Add Product</h2>
+      <button class="btn btn-ghost btn-sm" id="editClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="field">
+          <label>ID *</label>
+          <input type="number" id="fId" min="1" placeholder="e.g. 61">
+        </div>
+        <div class="field">
+          <label>Category *</label>
+          <select id="fCat"></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Name *</label>
+        <input type="text" id="fName" placeholder="Product name">
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea id="fDesc" placeholder="Short description"></textarea>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Price (ETB) *</label>
+          <input type="number" id="fPrice" min="0" step="1" placeholder="0">
+        </div>
+        <div class="field">
+          <label>Sale price (optional)</label>
+          <input type="number" id="fSale" min="0" step="1" placeholder="Leave empty if no sale">
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Image path</label>
+          <input type="text" id="fImg" placeholder="photos/61.jpg">
+        </div>
+        <div class="field">
+          <label>2nd image (optional)</label>
+          <input type="text" id="fImg2" placeholder="photos/61a.jpg">
+        </div>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" id="fBuilder">
+        Weekly Asbeza builder product (special basket)
+      </label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="editCancel">Cancel</button>
+      <button class="btn btn-primary" id="editSave">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-bg" id="exportModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Export PRODUCTS code</h2>
+      <button class="btn btn-ghost btn-sm" id="exportClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint">Copy this and replace the <code>const PRODUCTS = [ ... ];</code> block in your index.html</p>
+      <textarea class="code-box" id="exportCode" readonly></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" id="btnCopy">Copy to clipboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-bg" id="importModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Import products</h2>
+      <button class="btn btn-ghost btn-sm" id="importClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="hint">Paste a JSON array of products, or a full <code>const PRODUCTS = [...];</code> block.</p>
+      <textarea class="code-box" id="importCode" style="background:#fff;color:var(--ink);min-height:180px" placeholder='[ { "id": 1, "name": "...", ... } ]'></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="importCancel">Cancel</button>
+      <button class="btn btn-primary" id="importSave">Import</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ========== CONFIG ==========
+  // Change this password after first use
+  const ADMIN_PASSWORD = 'dejaf2026';
+  const STORAGE_KEY = 'dejaf_products_v1';
+
+  const CATEGORIES = [
+    'Grocery',
+    'Beauty & Cosmetics',
+    'Apparel',
+    'Gift Packages',
+    'Coffee & Tea',
+    'Books & Paper',
+    'Home & Garden',
+    'Electrical Equipment'
+  ];
+
+  // Seed data (same structure as your shop). Replace via Import anytime.
+  const SEED_PRODUCTS = [
+    { id: 23, name: 'Shea Butter Body Cream', cat: 'Beauty & Cosmetics', price: 240, sale: null, img: 'photos/23.jpg', desc: 'Whipped shea butter, unscented, for dry skin.' },
+    { id: 24, name: 'Natural Henna Powder, 100g', cat: 'Beauty & Cosmetics', price: 130, sale: null, img: 'photos/24.webp', desc: 'Pure henna leaf powder for hair and skin art.' },
+    { id: 25, name: 'Matte Lipstick Set', cat: 'Beauty & Cosmetics', price: 390, sale: null, img: 'photos/25.webp', desc: 'Three long-wear shades in a compact travel case.' },
+    { id: 41, name: 'Eau de Parfum, For Women', cat: 'Beauty & Cosmetics', price: 950, sale: null, img: 'photos/41.jpg', img2: 'photos/41a.jpg', desc: 'Eau de Parfum for women.' },
+    { id: 42, name: 'Eau de Parfum, For Men, 50ml', cat: 'Beauty & Cosmetics', price: 850, sale: null, img: 'photos/42.jpg', img2: 'photos/42a.jpg', desc: 'Eau de Parfum for men, 50ml.' },
+    { id: 2, name: 'Black seeds oil, For Healthy, 250ml', cat: 'Beauty & Cosmetics', price: 1200, sale: null, img: 'photos/2.jpg', img2: 'photos/2a.jpg', desc: 'Black seeds oil 250ml.' },
+    { id: 38, name: 'Kids Pajama Set, Assorted Prints', cat: 'Apparel', price: 480, sale: null, img: 'photos/38.jpg', desc: 'Kids pajama set, assorted prints.' },
+    { id: 39, name: 'Kids Pajama Pants, Assorted Prints', cat: 'Apparel', price: 260, sale: null, img: 'photos/39.jpg', desc: 'Kids pajama pants, assorted prints.' },
+    { id: 40, name: 'Girls Leggings, Navy & Lilac', cat: 'Apparel', price: 320, sale: null, img: 'photos/40.jpg', desc: 'Girls leggings in navy and lilac.' },
+    { id: 43, name: "Men's Pullover Hoodie", cat: 'Apparel', price: 900, sale: null, img: 'photos/43.jpg', desc: "Men's pullover hoodie." },
+    { id: 44, name: "Men's Pique Polo Shirt", cat: 'Apparel', price: 650, sale: null, img: 'photos/44.jpg', desc: "Men's pique polo shirt." },
+    { id: 45, name: "Men's Boxer Shorts, Assorted Patterns (6-Pack)", cat: 'Apparel', price: 780, sale: null, img: 'photos/45.jpg', desc: "Men's boxer shorts, 6-pack." },
+    { id: 46, name: 'Executive Gift Box', cat: 'Gift Packages', price: 3000, sale: null, img: 'photos/46.jpg', desc: 'Executive gift box.' },
+    { id: 47, name: 'Birthday Gift Box', cat: 'Gift Packages', price: 3500, sale: null, img: 'photos/47.jpg', desc: 'Birthday gift box.' },
+    { id: 48, name: 'Celebration Gift Box', cat: 'Gift Packages', price: 4000, sale: null, img: 'photos/48.jpg', img2: 'photos/48a.jpg', desc: 'Celebration gift set — notebook, bottle/thermos and cards.' },
+    { id: 26, name: 'Voltage Stabilizer, 1000VA', cat: 'Electrical Equipment', price: 1850, sale: null, img: 'photos/26.jpg', desc: "Protects appliances from Addis Ababa's voltage swings." },
+    { id: 27, name: 'LED Bulb Pack, 4 x 9W', cat: 'Electrical Equipment', price: 340, sale: null, img: 'photos/27.jpg', desc: 'Energy-saving daylight bulbs, standard E27 base.' },
+    { id: 28, name: 'Rechargeable Emergency Lamp', cat: 'Electrical Equipment', price: 590, sale: null, img: 'photos/28.jpg', desc: 'Backup lighting with a 6-hour runtime, USB charging.' },
+    { id: 13, name: "Amharic Children's Storybook Set", cat: 'Books & Paper', price: 260, sale: null, img: 'photos/13.jpg', desc: 'Three illustrated folktales, printed in Amharic.' },
+    { id: 14, name: 'Frankincense & Myrrh Set', cat: 'Home & Garden', price: 180, sale: null, img: 'photos/14.jpg', desc: 'Ethiopian etan resin with a traditional clay burner.' },
+    { id: 17, name: 'Woven Mesob Basket', cat: 'Home & Garden', price: 1400, sale: null, img: 'photos/17.jpg', desc: 'Handwoven grass basket-table for serving injera.' },
+    { id: 1, name: 'Yirgacheffe Coffee Beans', cat: 'Coffee & Tea', price: 380, sale: null, img: 'photos/1.jpg', desc: 'Yirgacheffe coffee beans.' },
+    { id: 19, name: 'Teff Flour, 5kg', cat: 'Grocery', price: 620, sale: null, img: 'photos/19.jpeg', desc: 'Whole-grain teff, stone-milled for authentic injera.' },
+    { id: 20, name: 'Fresh Avocados, 1kg Bag', cat: 'Grocery', price: 110, sale: null, img: 'photos/20.jpg', desc: 'Locally grown, ready to eat within a day or two.' },
+    { id: 21, name: 'Shiro Powder (ሽሮ), 500g', cat: 'Grocery', price: 170, sale: null, img: 'photos/21.jpg', desc: 'Roasted chickpea flour blend, ready for shiro wat.' },
+    { id: 22, name: 'Ethiopian Kibe Butter, 250g', cat: 'Grocery', price: 210, sale: null, img: 'photos/22.jpg', desc: 'Spiced clarified butter for traditional dishes.' },
+    { id: 29, name: 'Potatoes (ድንች), 1kg', cat: 'Grocery', price: 45, sale: null, img: 'photos/29.jpg', desc: 'Fresh table potatoes, good for wot or frying.' },
+    { id: 30, name: 'Carrots (ካሮት), 1kg', cat: 'Grocery', price: 55, sale: null, img: 'photos/30.jpg', desc: 'Crisp, sweet carrots for stews and salads.' },
+    { id: 31, name: 'Cabbage (ጎመን), 1 head', cat: 'Grocery', price: 40, sale: null, img: 'photos/31.jpg', desc: 'Fresh green cabbage for atkilt and sides.' },
+    { id: 32, name: 'Onions (ሽንኩርት), 1kg', cat: 'Grocery', price: 65, sale: null, img: 'photos/32.jpg', desc: 'Everyday red onions, the base of most wats.' },
+    { id: 33, name: 'Garlic (ነጭ ሽንኩርት), 250g', cat: 'Grocery', price: 90, sale: null, img: 'photos/33.jpg', desc: 'Fresh garlic bulbs, sold by the net.' },
+    { id: 34, name: 'Tomatoes (ቲማቲም), 1kg', cat: 'Grocery', price: 70, sale: 60, img: 'photos/34.jpg', desc: 'Ripe, ready to cook or slice fresh.' },
+    { id: 35, name: 'Cooking Oil (ዘይት), 1L', cat: 'Grocery', price: 260, sale: null, img: 'photos/35.jpg', desc: 'All-purpose vegetable oil for everyday cooking.' },
+    { id: 49, name: 'ሳምንታዊ አስቤዛ · Weekly Asbeza', cat: 'Grocery', price: 950, sale: null, img: 'photos/49.jpg', desc: 'Weekly grocery package.', builder: true },
+    { id: 50, name: 'Beso (በሶ), 1kg', cat: 'Grocery', price: 180, sale: null, img: 'photos/50.jpg', desc: 'Roasted barley flour — classic Ethiopian breakfast and snack staple.' },
+    { id: 51, name: 'Aja (አጃ), 1kg', cat: 'Grocery', price: 160, sale: null, img: 'photos/51.jpg', desc: 'Barley grain for porridge, kinche, or home milling.' },
+    { id: 52, name: 'Rice (ሩዝ), 1kg', cat: 'Grocery', price: 220, sale: null, img: 'photos/52.jpg', desc: 'Everyday white rice for family meals.' },
+    { id: 53, name: 'Qinche (ቅንጨ), 1kg', cat: 'Grocery', price: 170, sale: null, img: 'photos/53.jpg', desc: 'Cracked barley / qinche — ready for traditional porridge.' },
+    { id: 54, name: 'Difen Misir (ድፍን ምስር), 1kg', cat: 'Grocery', price: 200, sale: null, img: 'photos/54.jpg', desc: 'Whole red lentils for shiro, stews, and soups.' },
+    { id: 55, name: 'Split Misir (ምስር ክክ), 1kg', cat: 'Grocery', price: 210, sale: null, img: 'photos/55.jpg', desc: 'Split red lentils — cooks faster for everyday misir wot.' },
+    { id: 56, name: 'Split Ater (አተር ክክ), 1kg', cat: 'Grocery', price: 190, sale: null, img: 'photos/56.jpg', desc: 'Split peas for ater kik wot and hearty stews.' },
+    { id: 60, name: 'Peanut Butter (የለውዝ ቅቤ), 500g', cat: 'Grocery', price: 280, sale: null, img: 'photos/60.jpg', desc: 'Smooth peanut butter for bread, snacks, and cooking.' }
+  ];
+
+  let products = [];
+  let editingId = null; // null = add mode
+
+  // ---------- storage ----------
+  function loadProducts(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    }catch(e){}
+    return JSON.parse(JSON.stringify(SEED_PRODUCTS));
+  }
+  function saveProducts(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  }
+
+  // ---------- UI helpers ----------
+  function toast(msg){
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(()=> el.classList.remove('show'), 2200);
+  }
+  function esc(s){
+    return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function nextId(){
+    const max = products.reduce((m,p)=> Math.max(m, Number(p.id)||0), 0);
+    return max + 1;
+  }
+
+  // ---------- render ----------
+  function filtered(){
+    const q = document.getElementById('searchBox').value.trim().toLowerCase();
+    const cat = document.getElementById('filterCat').value;
+    const sort = document.getElementById('filterSort').value;
+    let list = products.slice();
+    if(cat) list = list.filter(p => p.cat === cat);
+    if(q) list = list.filter(p =>
+      (p.name||'').toLowerCase().includes(q) ||
+      (p.cat||'').toLowerCase().includes(q) ||
+      (p.desc||'').toLowerCase().includes(q) ||
+      String(p.id).includes(q)
+    );
+    list.sort((a,b)=>{
+      if(sort==='name') return (a.name||'').localeCompare(b.name||'');
+      if(sort==='price') return (a.sale||a.price||0) - (b.sale||b.price||0);
+      if(sort==='cat') return (a.cat||'').localeCompare(b.cat||'') || (a.id-b.id);
+      return (a.id||0) - (b.id||0);
+    });
+    return list;
+  }
+
+  function renderStats(){
+    const sales = products.filter(p=>p.sale!=null).length;
+    const cats = new Set(products.map(p=>p.cat)).size;
+    document.getElementById('stats').innerHTML = `
+      <div class="stat"><div class="n">${products.length}</div><div class="l">Products</div></div>
+      <div class="stat"><div class="n">${cats}</div><div class="l">Categories</div></div>
+      <div class="stat"><div class="n">${sales}</div><div class="l">On sale</div></div>
+    `;
+  }
+
+  function renderTable(){
+    const list = filtered();
+    const tbody = document.getElementById('productRows');
+    const empty = document.getElementById('emptyState');
+    if(!list.length){
+      tbody.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+    tbody.innerHTML = list.map(p => `
+      <tr>
+        <td class="mono">${p.id}</td>
+        <td><img class="thumb" src="${esc(p.img||'')}" alt="" onerror="this.style.opacity=.3"></td>
+        <td><strong>${esc(p.name)}</strong><div class="hint">${esc((p.desc||'').slice(0,60))}</div></td>
+        <td><span class="badge">${esc(p.cat)}</span></td>
+        <td class="mono">${Number(p.price).toLocaleString()}</td>
+        <td class="mono">${p.sale!=null ? Number(p.sale).toLocaleString() : '—'}</td>
+        <td>
+          ${p.sale!=null?'<span class="badge sale">SALE</span> ':''}
+          ${p.builder?'<span class="badge builder">BUILDER</span>':''}
+        </td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-ghost btn-sm" data-edit="${p.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" data-del="${p.id}">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('[data-edit]').forEach(btn=>{
+      btn.onclick = () => openEdit(Number(btn.dataset.edit));
+    });
+    tbody.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.onclick = () => {
+        const id = Number(btn.dataset.del);
+        const p = products.find(x=>x.id===id);
+        if(!p) return;
+        if(!confirm('Delete "'+p.name+'" ?')) return;
+        products = products.filter(x=>x.id!==id);
+        saveProducts();
+        renderAll();
+        toast('Product deleted');
+      };
+    });
+  }
+
+  function renderAll(){
+    renderStats();
+    renderTable();
+  }
+
+  function fillCatSelects(){
+    const opts = CATEGORIES.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    document.getElementById('fCat').innerHTML = opts;
+    document.getElementById('filterCat').innerHTML =
+      '<option value="">All categories</option>' + opts;
+  }
+
+  // ---------- edit modal ----------
+  function openEdit(id){
+    editingId = id;
+    const p = id==null ? null : products.find(x=>x.id===id);
+    document.getElementById('editTitle').textContent = p ? 'Edit Product' : 'Add Product';
+    document.getElementById('fId').value = p ? p.id : nextId();
+    document.getElementById('fId').disabled = !!p;
+    document.getElementById('fName').value = p ? p.name : '';
+    document.getElementById('fCat').value = p ? p.cat : CATEGORIES[0];
+    document.getElementById('fDesc').value = p ? (p.desc||'') : '';
+    document.getElementById('fPrice').value = p ? p.price : '';
+    document.getElementById('fSale').value = p && p.sale!=null ? p.sale : '';
+    document.getElementById('fImg').value = p ? (p.img||'') : '';
+    document.getElementById('fImg2').value = p ? (p.img2||'') : '';
+    document.getElementById('fBuilder').checked = !!(p && p.builder);
+    document.getElementById('editModal').classList.add('open');
+  }
+  function closeEdit(){
+    document.getElementById('editModal').classList.remove('open');
+    editingId = null;
+  }
+  function saveEdit(){
+    const id = Number(document.getElementById('fId').value);
+    const name = document.getElementById('fName').value.trim();
+    const cat = document.getElementById('fCat').value;
+    const desc = document.getElementById('fDesc').value.trim();
+    const price = Number(document.getElementById('fPrice').value);
+    const saleRaw = document.getElementById('fSale').value.trim();
+    const sale = saleRaw==='' ? null : Number(saleRaw);
+    const img = document.getElementById('fImg').value.trim();
+    const img2 = document.getElementById('fImg2').value.trim();
+    const builder = document.getElementById('fBuilder').checked;
+
+    if(!id || !name || !cat || !price && price!==0){
+      alert('Please fill ID, Name, Category and Price.');
+      return;
+    }
+    if(editingId==null && products.some(p=>p.id===id)){
+      alert('ID '+id+' already exists. Choose another ID.');
+      return;
+    }
+
+    const obj = { id, name, cat, price, sale, img: img||null, desc };
+    if(img2) obj.img2 = img2;
+    if(builder) obj.builder = true;
+
+    if(editingId==null){
+      products.push(obj);
+      toast('Product added');
+    }else{
+      const i = products.findIndex(p=>p.id===editingId);
+      if(i>=0) products[i] = obj;
+      toast('Product updated');
+    }
+    saveProducts();
+    closeEdit();
+    renderAll();
+  }
+
+  // ---------- export / import ----------
+  function toJsLiteral(p){
+    const parts = [
+      `id: ${p.id}`,
+      `name: ${JSON.stringify(p.name)}`,
+      `cat: ${JSON.stringify(p.cat)}`,
+      `price: ${Number(p.price)}`,
+      `sale: ${p.sale==null?'null':Number(p.sale)}`,
+      `img: ${JSON.stringify(p.img||'')}`,
+    ];
+    if(p.img2) parts.push(`img2: ${JSON.stringify(p.img2)}`);
+    parts.push(`desc: ${JSON.stringify(p.desc||'')}`);
+    if(p.builder) parts.push('builder: true');
+    return `  { ${parts.join(', ')} }`;
+  }
+  function openExport(){
+    const code = 'const PRODUCTS = [\n' + products.map(toJsLiteral).join(',\n') + '\n];';
+    document.getElementById('exportCode').value = code;
+    document.getElementById('exportModal').classList.add('open');
+  }
+  function openImport(){
+    document.getElementById('importCode').value = '';
+    document.getElementById('importModal').classList.add('open');
+  }
+  function doImport(){
+    let raw = document.getElementById('importCode').value.trim();
+    if(!raw){ alert('Paste JSON or PRODUCTS code first.'); return; }
+    try{
+      // Allow pasting full const PRODUCTS = [...]
+      if(raw.includes('const PRODUCTS')){
+        const m = raw.match(/\[[\s\S]*\]/);
+        if(!m) throw new Error('No array found');
+        raw = m[0];
+      }
+      // mild JS-object to JSON (null, unquoted keys already rare in export)
+      const data = JSON.parse(raw);
+      if(!Array.isArray(data)) throw new Error('Not an array');
+      products = data.map(p => ({
+        id: Number(p.id),
+        name: String(p.name||''),
+        cat: String(p.cat||'Grocery'),
+        price: Number(p.price)||0,
+        sale: p.sale==null || p.sale==='' ? null : Number(p.sale),
+        img: p.img || '',
+        desc: p.desc || '',
+        ...(p.img2 ? {img2: p.img2} : {}),
+        ...(p.builder ? {builder: true} : {})
+      }));
+      saveProducts();
+      document.getElementById('importModal').classList.remove('open');
+      renderAll();
+      toast('Imported '+products.length+' products');
+    }catch(e){
+      alert('Import failed: '+e.message+'\n\nTip: use Export first, or paste a JSON array.');
+    }
+  }
+
+  // ---------- auth ----------
+  function showAdmin(){
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    products = loadProducts();
+    fillCatSelects();
+    renderAll();
+  }
+  function tryLogin(){
+    const pass = document.getElementById('adminPass').value;
+    if(pass === ADMIN_PASSWORD){
+      sessionStorage.setItem('dejaf_admin_ok','1');
+      showAdmin();
+    }else{
+      document.getElementById('loginErr').textContent = 'Wrong password';
+    }
+  }
+
+  // ---------- events ----------
+  document.getElementById('loginBtn').onclick = tryLogin;
+  document.getElementById('adminPass').addEventListener('keydown', e=>{
+    if(e.key==='Enter') tryLogin();
+  });
+  document.getElementById('btnLogout').onclick = ()=>{
+    sessionStorage.removeItem('dejaf_admin_ok');
+    location.reload();
+  };
+  document.getElementById('btnAdd').onclick = ()=> openEdit(null);
+  document.getElementById('editClose').onclick = closeEdit;
+  document.getElementById('editCancel').onclick = closeEdit;
+  document.getElementById('editSave').onclick = saveEdit;
+  document.getElementById('btnExport').onclick = openExport;
+  document.getElementById('exportClose').onclick = ()=> document.getElementById('exportModal').classList.remove('open');
+  document.getElementById('btnCopy').onclick = async ()=>{
+    const t = document.getElementById('exportCode');
+    t.select();
+    try{
+      await navigator.clipboard.writeText(t.value);
+      toast('Copied!');
+    }catch(e){
+      document.execCommand('copy');
+      toast('Copied!');
+    }
+  };
+  document.getElementById('btnImport').onclick = openImport;
+  document.getElementById('importClose').onclick = ()=> document.getElementById('importModal').classList.remove('open');
+  document.getElementById('importCancel').onclick = ()=> document.getElementById('importModal').classList.remove('open');
+  document.getElementById('importSave').onclick = doImport;
+  document.getElementById('searchBox').oninput = renderTable;
+  document.getElementById('filterCat').onchange = renderTable;
+  document.getElementById('filterSort').onchange = renderTable;
+
+  // auto-login if session active
+  if(sessionStorage.getItem('dejaf_admin_ok')==='1') showAdmin();
+</script>
+</body>
+</html>
