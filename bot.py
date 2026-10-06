@@ -899,6 +899,7 @@ def main():
     if n_photos == 0:
         logger.warning("No photos/*.jpg found — Telegram will not show product images")
     logger.info("Starting bot (polling)...")
+   start_firebase_sync()
     application.run_polling(
         allowed_updates=Update.ALL_TYPES,
         drop_pending_updates=True,
