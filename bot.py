@@ -30,9 +30,7 @@ from telegram.ext import (
     filters,
 )
 
-from products import PRODUCTS, CATEGORIES
-
-PRODUCTS_BY_ID = {p["id"]: p for p in PRODUCTS}
+from products import PRODUCTS, CATEGORIES, PRODUCTS_BY_ID, start_firebase_sync
 carts = {}
 checkout_state = {}
 
