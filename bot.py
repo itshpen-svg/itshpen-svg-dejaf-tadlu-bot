@@ -725,29 +725,59 @@ async def on_text(update, context):
 
 async def on_location(update, context):
     chat_id = update.effective_chat.id
-    state = checkout_state.get(chat_id)
-    if not state or state.get("stage") != "address":
-        return
     loc = update.message.location
     if not loc:
         await update.message.reply_text("Could not read location. Please type your address.")
         return
-    state["address"] = (
-        "Location: "
-        + str(round(loc.latitude, 6))
-        + ", "
-        + str(round(loc.longitude, 6))
-        + " (map pin from customer)"
-    )
-    state["stage"] = "contact"
-    kb = ReplyKeyboardMarkup(
-        [[KeyboardButton("Share my phone number", request_contact=True)]],
-        resize_keyboard=True,
-        one_time_keyboard=True,
-    )
+
+    lat = round(loc.latitude, 6)
+    lng = round(loc.longitude, 6)
+    maps_url = "https://maps.google.com/?q={0},{1}".format(lat, lng)
+    address_text = (
+        "Location pin: {0}, {1}\n"
+        "Google Maps: {2}"
+    ).format(lat, lng, maps_url)
+
+    state = checkout_state.get(chat_id)
+
+    # If customer is in checkout address step — normal path
+    if state and state.get("stage") == "address":
+        state["address"] = address_text
+        state["stage"] = "contact"
+        kb = ReplyKeyboardMarkup(
+            [[KeyboardButton("Share my phone number", request_contact=True)]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
+        await update.message.reply_text(
+            "Location saved.\n" + maps_url + "\n\n"
+            "Please share your phone number (or type it).",
+            reply_markup=kb,
+        )
+        return
+
+    # Sometimes Telegram sends location late / state was lost — still accept during checkout
+    if state and state.get("stage") in ("name", "contact"):
+        state["address"] = address_text
+        if state.get("stage") == "name":
+            state["stage"] = "contact"
+        kb = ReplyKeyboardMarkup(
+            [[KeyboardButton("Share my phone number", request_contact=True)]],
+            resize_keyboard=True,
+            one_time_keyboard=True,
+        )
+        await update.message.reply_text(
+            "Location saved.\n" + maps_url + "\n\n"
+            "Please share your phone number (or type it).",
+            reply_markup=kb,
+        )
+        return
+
+    # Not in checkout — tell them how to use it
     await update.message.reply_text(
-        "Location saved. Please share your phone number (or type it).",
-        reply_markup=kb,
+        "Location received:\n" + maps_url + "\n\n"
+        "To use this for delivery, start Checkout and share location when asked for address.",
+        reply_markup=reply_main_keyboard(),
     )
 
 
