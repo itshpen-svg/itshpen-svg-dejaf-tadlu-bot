@@ -31,6 +31,7 @@ from telegram.ext import (
 )
 
 from products import PRODUCTS, CATEGORIES, PRODUCTS_BY_ID, start_firebase_sync
+
 carts = {}
 checkout_state = {}
 
@@ -85,7 +86,6 @@ def resolve_photo(path_str):
     return None
 
 
-
 async def send_product_photo(context, chat_id, product):
     """Send one product photo (local file or public URL) with Add button."""
     raw = (product.get("photo") or "").strip()
@@ -119,8 +119,6 @@ async def send_product_photo(context, chat_id, product):
     except Exception as e:
         logger.error("send_product_photo failed id=%s raw=%s: %s", product.get("id"), raw, e)
         return False
-
-
 
 
 def fmt_etb(amount):
@@ -176,7 +174,6 @@ def reply_main_keyboard():
     )
 
 
-
 def categories_keyboard():
     buttons = []
     row = []
@@ -199,14 +196,12 @@ def norm_btn(s):
 
 
 def safe_text(value, fallback="…"):
-
     """Telegram rejects empty message text/captions."""
     s = (value or "").strip()
     return s if s else fallback
 
 
 def photo_products_in(cat):
-
     return [p for p in PRODUCTS if p["cat"] == cat and p.get("photo")]
 
 
@@ -364,15 +359,10 @@ async def start(update, context):
 
 
 async def myid(update, context):
-
-
-
-
     await update.message.reply_text(
         "Your chat ID is: " + str(update.effective_chat.id) + "\n\n"
         "If you are the shop owner, put this in .env as OWNER_CHAT_ID and restart."
     )
-
 
 
 async def photos_debug(update, context):
@@ -385,7 +375,11 @@ async def photos_debug(update, context):
         "photos dir exists: " + str(photos_dir.is_dir()),
     ]
     if photos_dir.is_dir():
-        files = sorted(list(photos_dir.glob("*.jpg")) + list(photos_dir.glob("*.jpeg")) + list(photos_dir.glob("*.png")))
+        files = sorted(
+            list(photos_dir.glob("*.jpg"))
+            + list(photos_dir.glob("*.jpeg"))
+            + list(photos_dir.glob("*.png"))
+        )
         lines.append("image count: " + str(len(files)))
         lines.append("sample: " + ", ".join(f.name for f in files[:15]))
     else:
@@ -397,7 +391,6 @@ async def photos_debug(update, context):
     lines.append("root sample: " + ", ".join(p.name for p in root_jpgs[:12]))
     lines.append("products with photo field: " + str(len(with_photo)))
     await update.message.reply_text(chr(10).join(lines)[:3500])
-
 
 
 async def cancel(update, context):
@@ -438,7 +431,6 @@ async def show_grocery_asbeza(context, chat_id, edit_query=None):
                     [[InlineKeyboardButton("Add", callback_data="add:" + str(p["id"]))]]
                 ),
             )
-
 
 
 async def safe_edit(query, text, reply_markup=None):
@@ -589,7 +581,6 @@ async def on_text(update, context):
         text = norm_btn(raw)
         logger.info("text from %s: %r -> %r", chat_id, raw[:60], text[:60])
 
-        # Menu (always)
         if text in ("browse categories", "categories", "browse category"):
             checkout_state.pop(chat_id, None)
             await update.message.reply_text(
@@ -661,7 +652,6 @@ async def on_text(update, context):
             )
             return
 
-        # Checkout stages
         state = checkout_state.get(chat_id)
         if not state:
             await update.message.reply_text(
@@ -734,8 +724,6 @@ async def on_text(update, context):
 
 
 async def on_location(update, context):
-
-
     chat_id = update.effective_chat.id
     state = checkout_state.get(chat_id)
     if not state or state.get("stage") != "address":
@@ -805,7 +793,6 @@ async def finish_checkout(update, context, chat_id):
         + "\n\nPayment: Cash on Delivery (pay when you receive)"
     )
 
-    # Notify shop owner (must be set on Render as OWNER_CHAT_ID)
     if not OWNER_CHAT_ID:
         logger.error(
             "OWNER_CHAT_ID is not set — order %s will NOT be sent to the owner. "
@@ -832,7 +819,8 @@ async def finish_checkout(update, context, chat_id):
     await update.message.reply_text("Order received. Thank you!", reply_markup=ReplyKeyboardRemove())
     await update.message.reply_text(
         "We got your order (" + order_id + ").\n"
-        "Payment: Cash on Delivery — pay when your order arrives.\nWe will call/message you to confirm delivery.\n\n" + summary,
+        "Payment: Cash on Delivery — pay when your order arrives.\n"
+        "We will call/message you to confirm delivery.\n\n" + summary,
         reply_markup=main_menu_keyboard(chat_id),
     )
 
@@ -869,7 +857,6 @@ def main():
             "Set it on Render from /myid."
         )
 
-    # Python 3.12+ / 3.14 on Render: create a main-thread event loop first
     try:
         loop = asyncio.get_event_loop()
         if loop.is_closed():
@@ -899,7 +886,7 @@ def main():
     if n_photos == 0:
         logger.warning("No photos/*.jpg found — Telegram will not show product images")
     logger.info("Starting bot (polling)...")
-   start_firebase_sync()
+    start_firebase_sync()
     application.run_polling(
         allowed_updates=Update.ALL_TYPES,
         drop_pending_updates=True,
