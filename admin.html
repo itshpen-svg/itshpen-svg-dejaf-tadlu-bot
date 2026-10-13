@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dejaf Tadlu — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Ethiopic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1A1008; --paper:#F5EDE0; --paper-dim:#EDE0C8;
+    --gold:#C9A227; --gold-light:#E0B83D; --rust:#B5482A; --green:#37613F;
+    --line:rgba(26,16,8,0.14); --shadow:0 10px 30px rgba(26,16,8,0.16);
+    --sidebar:#1F140E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+  h1,h2,h3{font-family:'Fraunces',serif}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .hint{font-size:12px;color:#8a7a6c;line-height:1.45}
+  .err{color:var(--rust);font-size:13px;min-height:18px;margin-top:8px}
+  code{font-family:'JetBrains Mono',monospace;font-size:12px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:6px;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit}
+  .btn-primary{background:var(--ink);color:var(--paper)}
+  .btn-gold{background:var(--gold);color:#1A1008}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+  .btn-danger{background:#fff;border:1px solid #e8b4a8;color:var(--rust)}
+  .btn-sm{padding:7px 12px;font-size:12px}
+  .btn-block{width:100%}
+  #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  .login-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:32px 28px;width:100%;max-width:400px;box-shadow:var(--shadow)}
+  .login-box h1{font-size:22px;text-align:center;margin-bottom:4px}
+  .login-box .sub{font-size:13px;color:#8a7a6c;text-align:center;margin-bottom:22px}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12px;font-weight:600;color:#6b5b4d;margin-bottom:5px}
+  .pass-wrap{position:relative}
+  .pass-wrap input{width:100%;padding:12px 44px 12px 14px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit}
+  .pass-wrap input:focus{outline:none;border-color:var(--gold)}
+  .pass-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;padding:6px;color:#6b5b4d;font-size:16px}
+  .login-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 16px;font-size:13px}
+  .login-row label{display:flex;align-items:center;gap:6px;cursor:pointer;color:#5a4a3f}
+  .login-row a{color:var(--gold);text-decoration:none;font-weight:600}
+  .forgot-box{display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);text-align:left}
+  .forgot-box.open{display:block}
+  .forgot-box input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;margin:6px 0;font-size:14px}
+  #adminApp{display:none;min-height:100vh}
+  #adminApp.open{display:flex}
+  .sidebar{width:240px;background:var(--sidebar);color:#F5EDE0;flex-shrink:0;padding:16px 10px;position:sticky;top:0;height:100vh;overflow:auto}
+  .sidebar .brand{font-family:'Fraunces',serif;font-weight:700;font-size:17px;padding:8px 10px 14px}
+  .sidebar .brand span{display:block;color:var(--gold-light);font-size:12px;margin-top:4px;font-family:'Noto Sans Ethiopic',sans-serif}
+  .nav-section{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,237,224,.4);padding:14px 10px 6px}
+  .nav-item{display:block;width:100%;text-align:left;border:none;background:transparent;color:rgba(245,237,224,.92);padding:9px 12px;border-radius:8px;font-size:13px;cursor:pointer;margin:2px 0;font-family:inherit}
+  .nav-item:hover{background:rgba(255,255,255,.06)}
+  .nav-item.active{background:var(--gold);color:#1A1008;font-weight:700}
+  .sidebar-foot{margin-top:16px;padding:8px}
+  .main-wrap{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{background:var(--ink);color:var(--paper);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .topbar .title{font-family:'Fraunces',serif;font-weight:700;font-size:17px}
+  .topbar .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .topbar .btn-ghost{color:#F5EDE0;border-color:rgba(245,237,224,.3);background:transparent}
+  .content{padding:18px;max-width:1100px}
+  .admin-section{display:none}
+  .admin-section.active{display:block}
+  .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px}
+  .stat .n{font-family:'Fraunces',serif;font-size:26px;font-weight:700}
+  .stat .l{font-size:11px;color:#8a7a6c;text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+  .panel-block{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:12px}
+  .empty-panel{padding:28px 12px;text-align:center;color:#8a7a6c;font-size:14px;line-height:1.5}
+  .list-card{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:8px;background:#fff}
+  .toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+  .toolbar input,.toolbar select{padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:13px}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}
+  th{background:var(--paper-dim);font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b5b4d}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;background:var(--paper-dim)}
+  .badge.sale{background:#fde8e2;color:var(--rust)}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:200}
+  .toast.show{opacity:1}
+  .modal{position:fixed;inset:0;background:rgba(26,16,8,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:100}
+  .modal.open{display:flex}
+  .modal-card{background:#fff;border-radius:12px;width:100%;max-width:520px;max-height:90vh;overflow:auto;box-shadow:var(--shadow)}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .modal-body{padding:16px}
+  .modal-foot{padding:12px 16px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:8px}
+  .modal-body .field input,.modal-body .field select,.modal-body .field textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:6px;font-size:14px;font-family:inherit}
+  .modal-body .field textarea{min-height:70px;resize:vertical}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:800px){
+    #adminApp.open{flex-direction:column}
+    .sidebar{width:100%;height:auto;position:relative}
+    .row2{grid-template-columns:1fr}
+  }
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+</head>
+<body>
+<div id="loginScreen">
+  <div class="login-box">
+    <h1>Dejaf Tadlu</h1>
+    <p class="sub">Admin · ደጃፍ ታደሉ</p>
+    <div class="field">
+      <label>Password</label>
+      <div class="pass-wrap">
+        <input type="password" id="adminPass" placeholder="Admin password" autocomplete="current-password">
+        <button type="button" class="pass-toggle" id="togglePass" title="Show password" aria-label="Show password">👁</button>
+      </div>
+    </div>
+    <div class="login-row">
+      <label><input type="checkbox" id="rememberMe"> Remember me</label>
+      <a href="#" id="forgotLink">Forgot password?</a>
+    </div>
+    <button class="btn btn-primary btn-block" id="loginBtn">Enter Admin</button>
+    <p class="err" id="loginErr"></p>
+    <div class="forgot-box" id="forgotBox">
+      <p class="hint">Enter recovery code to reset password to default <strong>dejaf2026</strong>.</p>
+      <input type="text" id="recoveryCode" placeholder="Recovery code">
+      <button type="button" class="btn btn-ghost btn-block" id="btnResetPass">Reset password</button>
+      <p class="hint" style="margin-top:8px">Default recovery code: <strong>dejaf-recover</strong></p>
+    </div>
+    <p class="hint" style="margin-top:16px;text-align:center">Default password: <strong>dejaf2026</strong></p>
+  </div>
+</div>
+<div id="adminApp">
+  <aside class="sidebar">
+    <div class="brand">Dejaf Tadlu<span>ደጃፍ · Admin</span></div>
+    <div class="nav-section">Overview</div>
+    <button type="button" class="nav-item" data-section="dashboard">Dashboard</button>
+    <button type="button" class="nav-item" data-section="orders">Orders</button>
+    <div class="nav-section">Catalog</div>
+    <button type="button" class="nav-item active" data-section="products">Products</button>
+    <button type="button" class="nav-item" data-section="customers">Customers</button>
+    <div class="nav-section">Marketing &amp; sales</div>
+    <button type="button" class="nav-item" data-section="discounts">Discounts</button>
+    <button type="button" class="nav-item" data-section="marketing">Marketing</button>
+    <button type="button" class="nav-item" data-section="channels">Sales channels</button>
+    <div class="nav-section">System</div>
+    <button type="button" class="nav-item" data-section="settings">Settings</button>
+    <div class="sidebar-foot">
+      <button type="button" class="btn btn-ghost btn-sm" id="btnLogout" style="width:100%;color:#F5EDE0;border-color:rgba(245,237,224,.25);background:transparent">Logout</button>
+    </div>
+  </aside>
+  <div class="main-wrap">
+    <div class="topbar">
+      <div class="title" id="pageTitle">Products</div>
+      <div class="actions">
+        <button class="btn btn-gold btn-sm" id="btnAdd">+ Add Product</button>
+        <button class="btn btn-ghost btn-sm" id="btnExport">Export Code</button>
+        <button class="btn btn-ghost btn-sm" id="btnImport">Import JSON</button>
+      </div>
+    </div>
+    <div class="content">
+      <section class="admin-section" data-section="dashboard">
+        <div class="stats" id="dashStats"></div>
+        <div class="panel-block"><strong>Urgent alerts</strong><p class="hint" id="dashAlerts">No urgent alerts.</p></div>
+        <div class="panel-block"><strong>Daily overview</strong><p class="hint">Product stats update from catalog. Orders: check Telegram.</p></div>
+      </section>
+      <section class="admin-section" data-section="orders">
+        <div class="panel-block"><strong>Orders</strong><p class="hint">Pending · fulfillment · returns · invoices</p>
+        <div class="empty-panel">Orders arrive via Telegram / WhatsApp. Firebase /orders can be connected later.</div></div>
+      </section>
+      <section class="admin-section active" data-section="products">
+        <div class="stats" id="stats"></div>
+        <div class="toolbar">
+          <input type="search" id="searchBox" placeholder="Search name, category…">
+          <select id="filterCat"><option value="">All categories</option></select>
+          <select id="filterSort">
+            <option value="id">Sort by ID</option>
+            <option value="name">Sort by Name</option>
+            <option value="cat">Sort by Category</option>
+            <option value="price">Sort by Price</option>
+          </select>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnAddCat">+ Add Category</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnAddSubcat">+ Add Subcategory</button>
+        </div>
+        <div style="overflow:auto">
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th></th></tr></thead>
+            <tbody id="productTable"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="admin-section" data-section="customers">
+        <div class="panel-block"><strong>Customers</strong><div class="empty-panel">CRM needs saved orders. Coming later.</div></div>
+      </section>
+      <section class="admin-section" data-section="discounts">
+        <div class="panel-block"><strong>Discounts</strong><div class="empty-panel">Use product Sale price for now. Coupons later.</div></div>
+      </section>
+      <section class="admin-section" data-section="marketing">
+        <div class="panel-block"><strong>Marketing</strong><div class="empty-panel">Email / social automations — coming later.</div></div>
+      </section>
+      <section class="admin-section" data-section="channels">
+        <div class="panel-block"><strong>Sales channels</strong>
+          <ul class="hint" style="margin:10px 0 0 18px;line-height:1.7">
+            <li>Website (GitHub Pages)</li>
+            <li>Telegram: @Tadeluonlineshoppingbot</li>
+            <li>WhatsApp: 0919 766 932</li>
+          </ul>
+        </div>
+      </section>
+      <section class="admin-section" data-section="settings">
+        <div class="panel-block">
+          <strong>Change password</strong>
+          <div class="field" style="margin-top:10px"><label>Current password</label><input type="password" id="setCurPass"></div>
+          <div class="field"><label>New password</label><input type="password" id="setNewPass"></div>
+          <div class="field"><label>Confirm new password</label><input type="password" id="setNewPass2"></div>
+          <button type="button" class="btn btn-primary btn-sm" id="btnChangePass">Update password</button>
+        </div>
+        <div class="panel-block">
+          <strong>Recovery code</strong>
+          <p class="hint">For Forgot password on login.</p>
+          <div class="field"><label>New recovery code</label><input type="text" id="setRecovery" placeholder="Min 4 characters"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnSaveRecovery">Save recovery code</button>
+        </div>
+        <div class="panel-block">
+          <strong>Staff under admin</strong>
+          <p class="hint">Record staff (name / role / phone). Login still uses master password.</p>
+          <div class="row2">
+            <div class="field"><label>Name</label><input type="text" id="staffName"></div>
+            <div class="field"><label>Role</label>
+              <select id="staffRole"><option>Staff</option><option>Manager</option><option>Delivery</option></select>
+            </div>
+          </div>
+          <div class="field"><label>Phone</label><input type="text" id="staffPhone"></div>
+          <button type="button" class="btn btn-gold btn-sm" id="btnAddStaff">Add staff</button>
+          <div id="staffList" style="margin-top:12px"></div>
+        </div>
+        <div class="panel-block">
+          <strong>Categories</strong>
+          <div class="field"><label>New category</label><input type="text" id="newCatName"></div>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnSaveCat">Add category</button>
+          <div id="catList" style="margin-top:10px"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+<div class="modal" id="editModal">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="editTitle">Add Product</h2><button type="button" class="btn btn-ghost btn-sm" id="editClose">✕</button></div>
+    <div class="modal-body">
+      <div class="row2">
+        <div class="field"><label>ID *</label><input type="number" id="fId" min="1"></div>
+        <div class="field"><label>Category *</label>
+          <div style="display:flex;gap:8px"><select id="fCat" style="flex:1"></select>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnAddCatModal">+ Add</button></div>
+        </div>
+      </div>
+      <div class="field"><label>Subcategory (optional)</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="fSubcat" list="subcatSuggestions" style="flex:1" placeholder="Men, Women, Shoes…">
+          <datalist id="subcatSuggestions"></datalist>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnAddSubcatModal">+ Add</button>
+        </div>
+      </div>
+      <div class="field"><label>Name *</label><input type="text" id="fName"></div>
+      <div class="field"><label>Description</label><textarea id="fDesc"></textarea></div>
+      <div class="row2">
+        <div class="field"><label>Price (ETB) *</label><input type="number" id="fPrice" min="0"></div>
+        <div class="field"><label>Sale price</label><input type="number" id="fSale" min="0" placeholder="Optional"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Image</label><input type="text" id="fImg" placeholder="photos/61.jpg"></div>
+        <div class="field"><label>2nd image</label><input type="text" id="fImg2"></div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="fBuilder"> Weekly Asbeza builder</label>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" id="editCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="editSave">Save</button>
+    </div>
+  </div>
+</div>
+<div class="modal" id="exportModal">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Export</h2><button type="button" class="btn btn-ghost btn-sm" id="exportClose">✕</button></div>
+    <div class="modal-body"><textarea id="exportCode" class="mono" style="width:100%;min-height:220px;font-size:12px"></textarea></div>
+    <div class="modal-foot"><button type="button" class="btn btn-primary" id="btnCopy">Copy</button></div>
+  </div>
+</div>
+<div class="modal" id="importModal">
+  <div class="modal-card">
+    <div class="modal-head"><h2>Import JSON</h2><button type="button" class="btn btn-ghost btn-sm" id="importClose">✕</button></div>
+    <div class="modal-body"><textarea id="importCode" style="width:100%;min-height:180px"></textarea></div>
+    <div class="modal-foot">
+      <button type="button" class="btn btn-ghost" id="importCancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="importSave">Import</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+(function(){
+  const firebaseConfig = {
+    apiKey: "AIzaSyAyyuraGunD2VjEx0XGL65YUR6Fjvy8-ls",
+    authDomain: "dejaf-tadlu.firebaseapp.com",
+    databaseURL: "https://dejaf-tadlu-default-rtdb.firebaseio.com",
+    projectId: "dejaf-tadlu",
+    storageBucket: "dejaf-tadlu.firebasestorage.app",
+    messagingSenderId: "743617382257",
+    appId: "1:743617382257:web:585bdbc6848ff480b318d0"
+  };
+  let firebaseReady = false, db = null;
+  try { firebase.initializeApp(firebaseConfig); db = firebase.database(); firebaseReady = true; } catch(e){ console.warn(e); }
+
+  const STORAGE_KEY = 'dejaf_products_v1';
+  const CAT_KEY = 'dejaf_categories_v1';
+  const PASS_HASH_KEY = 'dejaf_admin_pass_hash';
+  const RECOVERY_KEY = 'dejaf_recovery_code';
+  const SESSION_KEY = 'dejaf_admin_session';
+  const REMEMBER_KEY = 'dejaf_admin_remember';
+  const STAFF_KEY = 'dejaf_staff_v1';
+  const SUBCAT_KEY = 'dejaf_subcategories_v1';
+  const MAX_ATTEMPTS = 5, LOCK_MINUTES = 15;
+  const DEFAULT_RECOVERY = 'dejaf-recover';
+  let ADMIN_PASSWORD_HASH = '';
+  const DEFAULT_CATEGORIES = ['Grocery','Beauty & Cosmetics','Apparel','Gift Packages','Coffee & Tea','Books & Paper','Home & Garden','Electrical Equipment'];
+  const SEED_PRODUCTS = [
+    {id:1,name:'Yirgacheffe Coffee Beans, 250g',cat:'Coffee & Tea',price:380,sale:null,img:'photos/1.jpg',desc:'Fresh Yirgacheffe beans.'},
+    {id:21,name:'Shiro Powder, 500g',cat:'Grocery',price:170,sale:null,img:'photos/21.jpg',desc:'Roasted chickpea flour blend.'},
+    {id:49,name:'Weekly Asbeza',cat:'Grocery',price:950,sale:null,img:'photos/49.jpg',desc:'Build your weekly basket.',builder:true}
+  ];
+  let products = [], editingId = null, CATEGORIES = loadCategories();
+
+  function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2200); }
+  async function hashPassword(str){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join(''); }
+  async function ensureDefaultHash(){ if(!ADMIN_PASSWORD_HASH) ADMIN_PASSWORD_HASH = await hashPassword('dejaf2026'); }
+  async function getActivePasswordHash(){ await ensureDefaultHash(); return localStorage.getItem(PASS_HASH_KEY) || ADMIN_PASSWORD_HASH; }
+  function getRecovery(){ return localStorage.getItem(RECOVERY_KEY) || DEFAULT_RECOVERY; }
+  function loadCategories(){ try{ var a=JSON.parse(localStorage.getItem(CAT_KEY)||'null'); if(Array.isArray(a)&&a.length) return a; }catch(e){} return DEFAULT_CATEGORIES.slice(); }
+  function saveCategories(list){ localStorage.setItem(CAT_KEY, JSON.stringify(list)); CATEGORIES=list; }
+  function loadSavedSubcats(){ try{ return JSON.parse(localStorage.getItem(SUBCAT_KEY)||'[]'); }catch(e){ return []; } }
+  function saveSavedSubcats(list){ localStorage.setItem(SUBCAT_KEY, JSON.stringify(list)); }
+  function loadStaff(){ try{ return JSON.parse(localStorage.getItem(STAFF_KEY)||'[]'); }catch(e){ return []; } }
+  function saveStaff(list){ localStorage.setItem(STAFF_KEY, JSON.stringify(list)); }
+  function loadProducts(){ try{ var a=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null'); if(Array.isArray(a)&&a.length) return a; }catch(e){} return JSON.parse(JSON.stringify(SEED_PRODUCTS)); }
+  function saveProducts(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(products)); pushProductsToCloud(products).then(function(){ toast('Saved & synced to shop'); }).catch(function(){ toast('Saved locally (cloud sync failed)'); }); }
+  async function pushProductsToCloud(list){ if(!firebaseReady||!db) throw new Error('no fb'); await db.ref('products').set(list); }
+  async function pullProductsFromCloud(){ if(!firebaseReady||!db) return null; var val=(await db.ref('products').once('value')).val(); if(!val) return null; return Array.isArray(val)?val.filter(Boolean):Object.keys(val).map(function(k){ return val[k]; }).filter(Boolean); }
+
+  function createSession(remember){ var hours=remember?24*14:4; var payload=JSON.stringify({exp:Date.now()+hours*3600*1000}); sessionStorage.setItem(SESSION_KEY,payload); if(remember) localStorage.setItem(REMEMBER_KEY,payload); else localStorage.removeItem(REMEMBER_KEY); }
+  function destroySession(){ sessionStorage.removeItem(SESSION_KEY); localStorage.removeItem(REMEMBER_KEY); }
+  function validSession(){ var pairs=[[sessionStorage,SESSION_KEY],[localStorage,REMEMBER_KEY]]; for(var i=0;i<pairs.length;i++){ try{ var o=JSON.parse(pairs[i][0].getItem(pairs[i][1])||'null'); if(o&&o.exp>Date.now()) return true; }catch(e){} } return false; }
+  function getLockState(){ try{ return JSON.parse(localStorage.getItem('dejaf_admin_lock')||'{}'); }catch(e){ return {}; } }
+  function isLocked(){ var s=getLockState(); return s.until&&s.until>Date.now(); }
+  function remainingLockMin(){ return Math.max(1, Math.ceil(((getLockState().until||0)-Date.now())/60000)); }
+  function recordFail(){ var s=getLockState(); s.attempts=(s.attempts||0)+1; if(s.attempts>=MAX_ATTEMPTS){ s.until=Date.now()+LOCK_MINUTES*60000; s.attempts=0; localStorage.setItem('dejaf_admin_lock',JSON.stringify(s)); return true; } localStorage.setItem('dejaf_admin_lock',JSON.stringify(s)); return false; }
+  function clearFails(){ localStorage.removeItem('dejaf_admin_lock'); }
+
+  function showSection(id){
+    document.querySelectorAll('.admin-section').forEach(function(s){ s.classList.toggle('active', s.dataset.section===id); });
+    document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.dataset.section===id); });
+    var titles={dashboard:'Dashboard',orders:'Orders',products:'Products',customers:'Customers',discounts:'Discounts',marketing:'Marketing',channels:'Sales channels',settings:'Settings'};
+    document.getElementById('pageTitle').textContent=titles[id]||'Admin';
+    if(id==='dashboard') renderDashboard();
+    if(id==='products') renderTable();
+    if(id==='settings'){ renderStaff(); renderCatList(); }
+  }
+  function renderDashboard(){
+    var n=products.length, sale=products.filter(function(p){ return p.sale!=null; }).length, cats={};
+    products.forEach(function(p){ if(p.cat) cats[p.cat]=1; });
+    document.getElementById('dashStats').innerHTML='<div class="stat"><div class="n">'+n+'</div><div class="l">Products</div></div><div class="stat"><div class="n">'+sale+'</div><div class="l">On sale</div></div><div class="stat"><div class="n">'+Object.keys(cats).length+'</div><div class="l">Categories</div></div>';
+    document.getElementById('dashAlerts').textContent='No urgent alerts. Monitor Telegram for new orders.';
+  }
+  function renderStats(){ var n=products.length, sale=products.filter(function(p){ return p.sale!=null; }).length; document.getElementById('stats').innerHTML='<div class="stat"><div class="n">'+n+'</div><div class="l">Products</div></div><div class="stat"><div class="n">'+sale+'</div><div class="l">On sale</div></div>'; }
+  function fillCatSelects(){ CATEGORIES=loadCategories(); var opts=CATEGORIES.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join(''); document.getElementById('fCat').innerHTML=opts; document.getElementById('filterCat').innerHTML='<option value="">All categories</option>'+opts; refreshSubcatSuggestions(); }
+  function refreshSubcatSuggestions(){ var list=document.getElementById('subcatSuggestions'); if(!list) return; var set={}; loadSavedSubcats().forEach(function(s){ set[s]=1; }); products.forEach(function(p){ if(p.subcat) set[String(p.subcat)]=1; }); ['Men','Women','Kids','Shoes','Unisex'].forEach(function(s){ set[s]=1; }); list.innerHTML=Object.keys(set).sort().map(function(s){ return '<option value="'+esc(s)+'">'; }).join(''); }
+  function addCategory(name){ name=(name||'').trim(); if(!name) return false; if(CATEGORIES.some(function(c){ return c.toLowerCase()===name.toLowerCase(); })){ toast('Category exists'); return false; } CATEGORIES.push(name); saveCategories(CATEGORIES); fillCatSelects(); toast('Category added'); return true; }
+  function addSubcategory(name){ name=(name||'').trim(); if(!name){ toast('Enter subcategory'); return false; } var saved=loadSavedSubcats(); if(!saved.some(function(s){ return s.toLowerCase()===name.toLowerCase(); })){ saved.push(name); saveSavedSubcats(saved); } document.getElementById('fSubcat').value=name; refreshSubcatSuggestions(); toast('Subcategory: '+name); return true; }
+  function renderCatList(){ var box=document.getElementById('catList'); if(box) box.innerHTML=CATEGORIES.map(function(c){ return '<span class="badge" style="margin:3px">'+esc(c)+'</span>'; }).join(' '); }
+  function renderStaff(){ var box=document.getElementById('staffList'); if(!box) return; var staff=loadStaff(); box.innerHTML=staff.length?staff.map(function(s,i){ return '<div class="list-card" style="display:flex;justify-content:space-between;align-items:center"><div><b>'+esc(s.name)+'</b><div class="hint">'+esc(s.role||'')+' · '+esc(s.phone||'')+'</div></div><button type="button" class="btn btn-ghost btn-sm" data-rm="'+i+'">Remove</button></div>'; }).join(''):'<div class="hint">No staff yet.</div>'; box.querySelectorAll('[data-rm]').forEach(function(btn){ btn.onclick=function(){ var list=loadStaff(); list.splice(Number(btn.dataset.rm),1); saveStaff(list); renderStaff(); }; }); }
+
+  function renderTable(){
+    renderStats();
+    var q=(document.getElementById('searchBox').value||'').toLowerCase();
+    var fc=document.getElementById('filterCat').value;
+    var sort=document.getElementById('filterSort').value;
+    var rows=products.slice();
+    if(q) rows=rows.filter(function(p){ return ((p.name||'')+(p.cat||'')+(p.subcat||'')+(p.desc||'')).toLowerCase().indexOf(q)>=0; });
+    if(fc) rows=rows.filter(function(p){ return p.cat===fc; });
+    rows.sort(function(a,b){
+      if(sort==='name') return (a.name||'').localeCompare(b.name||'');
+      if(sort==='cat') return (a.cat||'').localeCompare(b.cat||'');
+      if(sort==='price') return (a.sale!=null?a.sale:a.price)-(b.sale!=null?b.sale:b.price);
+      return (a.id||0)-(b.id||0);
+    });
+    var tb=document.getElementById('productTable');
+    tb.innerHTML=rows.map(function(p){
+      return '<tr><td class="mono">'+p.id+'</td><td>'+esc(p.name)+(p.sale!=null?' <span class="badge sale">SALE</span>':'')+(p.builder?' <span class="badge">Asbeza</span>':'')+'</td><td>'+esc(p.cat)+(p.subcat?' · '+esc(p.subcat):'')+'</td><td class="mono">'+(p.sale!=null?p.sale:p.price)+'</td><td><button type="button" class="btn btn-ghost btn-sm" data-e="'+p.id+'">Edit</button> <button type="button" class="btn btn-danger btn-sm" data-d="'+p.id+'">Del</button></td></tr>';
+    }).join('');
+    tb.querySelectorAll('[data-e]').forEach(function(b){ b.onclick=function(){ openEdit(Number(b.dataset.e)); }; });
+    tb.querySelectorAll('[data-d]').forEach(function(b){ b.onclick=function(){ if(!confirm('Delete '+b.dataset.d+'?')) return; products=products.filter(function(p){ return p.id!==Number(b.dataset.d); }); saveProducts(); renderTable(); }; });
+  }
+  function nextId(){ return products.reduce(function(m,p){ return Math.max(m,p.id||0); },0)+1; }
+  function openEdit(id){
+    editingId=id; var p=id==null?null:products.find(function(x){ return x.id===id; });
+    document.getElementById('editTitle').textContent=p?'Edit Product':'Add Product';
+    document.getElementById('fId').value=p?p.id:nextId();
+    document.getElementById('fId').disabled=!!p;
+    document.getElementById('fName').value=p?p.name:'';
+    document.getElementById('fCat').value=p?p.cat:CATEGORIES[0];
+    document.getElementById('fSubcat').value=p&&p.subcat?p.subcat:'';
+    document.getElementById('fDesc').value=p?(p.desc||''):'';
+    document.getElementById('fPrice').value=p?p.price:'';
+    document.getElementById('fSale').value=p&&p.sale!=null?p.sale:'';
+    document.getElementById('fImg').value=p?(p.img||''):'';
+    document.getElementById('fImg2').value=p?(p.img2||''):'';
+    document.getElementById('fBuilder').checked=!!(p&&p.builder);
+    refreshSubcatSuggestions();
+    document.getElementById('editModal').classList.add('open');
+  }
+  function closeEdit(){ document.getElementById('editModal').classList.remove('open'); editingId=null; }
+  function saveEdit(){
+    var id=Number(document.getElementById('fId').value);
+    var name=document.getElementById('fName').value.trim();
+    var cat=document.getElementById('fCat').value;
+    var subcat=document.getElementById('fSubcat').value.trim();
+    var desc=document.getElementById('fDesc').value.trim();
+    var price=Number(document.getElementById('fPrice').value);
+    var saleRaw=document.getElementById('fSale').value.trim();
+    var sale=saleRaw===''?null:Number(saleRaw);
+    var img=document.getElementById('fImg').value.trim();
+    var img2=document.getElementById('fImg2').value.trim();
+    var builder=document.getElementById('fBuilder').checked;
+    if(!id||!name||!cat||(!price&&price!==0)){ alert('Fill required fields'); return; }
+    if(editingId==null&&products.some(function(p){ return p.id===id; })){ alert('ID exists'); return; }
+    var obj={id:id,name:name,cat:cat,price:price,sale:sale,img:img||null,desc:desc};
+    if(subcat) obj.subcat=subcat;
+    if(img2) obj.img2=img2;
+    if(builder) obj.builder=true;
+    if(editingId==null) products.push(obj);
+    else { var i=products.findIndex(function(p){ return p.id===editingId; }); if(i>=0) products[i]=obj; }
+    saveProducts(); closeEdit(); renderTable();
+  }
+  function openExport(){ document.getElementById('exportCode').value='const PRODUCTS = '+JSON.stringify(products,null,2)+';'; document.getElementById('exportModal').classList.add('open'); }
+  function doImport(){ try{ var a=JSON.parse(document.getElementById('importCode').value); if(!Array.isArray(a)) throw 0; products=a; saveProducts(); renderTable(); document.getElementById('importModal').classList.remove('open'); toast('Imported '+a.length); }catch(e){ alert('Invalid JSON'); } }
+  async function showAdmin(){
+    document.getElementById('loginScreen').style.display='none';
+    var app=document.getElementById('adminApp'); app.style.display='flex'; app.classList.add('open');
+    var cloud=null; try{ cloud=await pullProductsFromCloud(); }catch(e){}
+    if(cloud&&cloud.length){ products=cloud; localStorage.setItem(STORAGE_KEY,JSON.stringify(products)); }
+    else { products=loadProducts(); if(firebaseReady&&products.length){ try{ await pushProductsToCloud(products); }catch(e){} } }
+    fillCatSelects(); renderTable(); showSection('products');
+  }
+  async function tryLogin(){
+    var err=document.getElementById('loginErr'); err.textContent='';
+    if(isLocked()){ err.textContent='Locked. Try in '+remainingLockMin()+' min.'; return; }
+    var pass=document.getElementById('adminPass').value||'';
+    if(!pass){ err.textContent='Enter password'; return; }
+    var btn=document.getElementById('loginBtn'); btn.disabled=true; btn.textContent='Checking…';
+    try{
+      await ensureDefaultHash();
+      var h=await hashPassword(pass);
+      var target=await getActivePasswordHash();
+      var ok=h.length===target.length, diff=0, i;
+      for(i=0;i<h.length;i++) diff|=h.charCodeAt(i)^target.charCodeAt(i%target.length);
+      ok=ok&&diff===0;
+      if(ok){ clearFails(); createSession(document.getElementById('rememberMe').checked); showAdmin(); }
+      else {
+        var locked=recordFail();
+        var left=MAX_ATTEMPTS-(getLockState().attempts||0);
+        err.textContent=locked?('Locked for '+LOCK_MINUTES+' min.'):('Wrong password. '+Math.max(0,left)+' tries left.');
+        document.getElementById('adminPass').value='';
+      }
+    } finally { btn.disabled=false; btn.textContent='Enter Admin'; }
+  }
+  async function changePassword(){
+    var cur=document.getElementById('setCurPass').value, n1=document.getElementById('setNewPass').value, n2=document.getElementById('setNewPass2').value;
+    if(!cur||!n1||!n2){ alert('Fill all fields'); return; }
+    if(n1!==n2){ alert('Passwords do not match'); return; }
+    if(n1.length<6){ alert('Min 6 characters'); return; }
+    await ensureDefaultHash();
+    if((await hashPassword(cur))!==(await getActivePasswordHash())){ alert('Current password wrong'); return; }
+    localStorage.setItem(PASS_HASH_KEY, await hashPassword(n1));
+    document.getElementById('setCurPass').value=''; document.getElementById('setNewPass').value=''; document.getElementById('setNewPass2').value='';
+    toast('Password updated');
+  }
+
+  document.getElementById('loginBtn').onclick=function(){ tryLogin(); };
+  document.getElementById('adminPass').addEventListener('keydown',function(e){ if(e.key==='Enter') tryLogin(); });
+  document.getElementById('togglePass').onclick=function(){ var inp=document.getElementById('adminPass'); var show=inp.type==='password'; inp.type=show?'text':'password'; document.getElementById('togglePass').textContent=show?'Hide':'👁'; };
+  document.getElementById('forgotLink').onclick=function(e){ e.preventDefault(); document.getElementById('forgotBox').classList.toggle('open'); };
+  document.getElementById('btnResetPass').onclick=function(){ if((document.getElementById('recoveryCode').value||'').trim()!==getRecovery()){ document.getElementById('loginErr').textContent='Invalid recovery code'; return; } localStorage.removeItem(PASS_HASH_KEY); clearFails(); document.getElementById('forgotBox').classList.remove('open'); toast('Reset to dejaf2026'); alert('Password is now: dejaf2026'); };
+  document.getElementById('btnLogout').onclick=function(){ destroySession(); location.reload(); };
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.addEventListener('click',function(){ showSection(n.dataset.section); }); });
+  document.getElementById('btnAdd').onclick=function(){ openEdit(null); };
+  document.getElementById('editClose').onclick=closeEdit;
+  document.getElementById('editCancel').onclick=closeEdit;
+  document.getElementById('editSave').onclick=saveEdit;
+  document.getElementById('btnExport').onclick=openExport;
+  document.getElementById('exportClose').onclick=function(){ document.getElementById('exportModal').classList.remove('open'); };
+  document.getElementById('btnCopy').onclick=async function(){ var t=document.getElementById('exportCode'); t.select(); try{ await navigator.clipboard.writeText(t.value); toast('Copied'); }catch(e){ document.execCommand('copy'); toast('Copied'); } };
+  document.getElementById('btnImport').onclick=function(){ document.getElementById('importModal').classList.add('open'); };
+  document.getElementById('importClose').onclick=function(){ document.getElementById('importModal').classList.remove('open'); };
+  document.getElementById('importCancel').onclick=function(){ document.getElementById('importModal').classList.remove('open'); };
+  document.getElementById('importSave').onclick=doImport;
+  document.getElementById('searchBox').oninput=renderTable;
+  document.getElementById('filterCat').onchange=renderTable;
+  document.getElementById('filterSort').onchange=renderTable;
+  document.getElementById('btnAddCat').onclick=function(){ var n=prompt('New category'); if(n) addCategory(n); };
+  document.getElementById('btnAddCatModal').onclick=function(){ var n=prompt('New category'); if(n&&addCategory(n)) document.getElementById('fCat').value=n.trim(); };
+  document.getElementById('btnAddSubcat').onclick=function(){ var n=prompt('New subcategory'); if(n) addSubcategory(n); };
+  document.getElementById('btnAddSubcatModal').onclick=function(){ var n=prompt('New subcategory'); if(n) addSubcategory(n); };
+  document.getElementById('btnChangePass').onclick=function(){ changePassword(); };
+  document.getElementById('btnSaveRecovery').onclick=function(){ var v=(document.getElementById('setRecovery').value||'').trim(); if(v.length<4){ alert('Min 4 characters'); return; } localStorage.setItem(RECOVERY_KEY,v); document.getElementById('setRecovery').value=''; toast('Recovery code saved'); };
+  document.getElementById('btnAddStaff').onclick=function(){ var name=(document.getElementById('staffName').value||'').trim(); if(!name){ alert('Enter name'); return; } var list=loadStaff(); list.push({name:name, role:document.getElementById('staffRole').value, phone:(document.getElementById('staffPhone').value||'').trim()}); saveStaff(list); document.getElementById('staffName').value=''; document.getElementById('staffPhone').value=''; renderStaff(); toast('Staff added'); };
+  document.getElementById('btnSaveCat').onclick=function(){ var v=document.getElementById('newCatName').value; if(addCategory(v)){ document.getElementById('newCatName').value=''; renderCatList(); } };
+  ensureDefaultHash().then(function(){ if(validSession()) showAdmin(); else destroySession(); });
+})();
+</script>
+</body>
+</html>
