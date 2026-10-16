@@ -144,7 +144,7 @@
     <div class="topbar">
       <div class="title" id="pageTitle">Products</div>
       <div class="actions">
-        <button class="btn btn-gold btn-sm" id="btnAdd">+ Add Product</button>
+        <button class="btn btn-gold btn-sm" id="btnFixUnits" class="btn btn-ghost">Auto-set units</button> <button type="button" class="btn btn-primary" id="btnAdd">+ Add Product</button>
         <button class="btn btn-ghost btn-sm" id="btnExport">Export Code</button>
         <button class="btn btn-ghost btn-sm" id="btnImport">Import JSON</button>
       </div>
@@ -156,8 +156,23 @@
         <div class="panel-block"><strong>Daily overview</strong><p class="hint">Product stats update from catalog. Orders: check Telegram.</p></div>
       </section>
       <section class="admin-section" data-section="orders">
-        <div class="panel-block"><strong>Orders</strong><p class="hint">Pending · fulfillment · returns · invoices</p>
-        <div class="empty-panel">Orders arrive via Telegram / WhatsApp. Firebase /orders can be connected later.</div></div>
+        <div class="panel-block">
+          <strong>Customer orders</strong>
+          <p class="hint">From website (Firebase <code>orders</code>). Update status for follow-up.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+            <select id="orderStatusFilter">
+              <option value="all">All statuses</option>
+              <option value="new">New</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="packing">Packing</option>
+              <option value="delivering">On the way</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnRefreshOrders">Refresh</button>
+          </div>
+          <div id="ordersBoard" class="empty-panel">Loading orders…</div>
+        </div>
       </section>
       <section class="admin-section active" data-section="products">
         <div class="stats" id="stats"></div>
@@ -175,7 +190,7 @@
         </div>
         <div style="overflow:auto">
           <table>
-            <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th></th></tr></thead>
+            <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th><th>Unit</th><th></th></tr></thead>
             <tbody id="productTable"></tbody>
           </table>
         </div>
@@ -256,14 +271,44 @@
       <div class="field"><label>Name *</label><input type="text" id="fName"></div>
       <div class="field"><label>Description</label><textarea id="fDesc"></textarea></div>
       <div class="row2">
-        <div class="field"><label>Price (ETB) *</label><input type="number" id="fPrice" min="0"></div>
-        <div class="field"><label>Sale price</label><input type="number" id="fSale" min="0" placeholder="Optional"></div>
+        <div class="field"><label>Price (ETB) *</label><input type="number" id="fPrice" min="0" step="any"></div>
+        <div class="field"><label>Sale price</label><input type="number" id="fSale" min="0" step="any" placeholder="Optional"></div>
       </div>
+      <div class="row2">
+        <div class="field"><label>Unit (preset)</label>
+          <select id="fUnit">
+            <option value="pcs">pcs (piece)</option>
+            <option value="kg">kg</option>
+            <option value="L">L (liter)</option>
+            <option value="g">g</option>
+            <option value="ml">ml</option>
+            <option value="custom">Custom…</option>
+          </select>
+        </div>
+        <div class="field"><label>Custom unit label</label>
+          <input type="text" id="fUnitCustom" placeholder="e.g. 100ml, bottle, pack, dozen" list="unitSuggestions">
+          <datalist id="unitSuggestions">
+            <option value="100ml"><option value="50ml"><option value="250ml">
+            <option value="bottle"><option value="pack"><option value="box">
+            <option value="dozen"><option value="bundle"><option value="sachet">
+          </datalist>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Step (qty increase)</label>
+          <input type="number" id="fStep" min="0.01" step="any" value="1" placeholder="1 or 0.5">
+        </div>
+        <div class="field"><label>Minimum qty</label>
+          <input type="number" id="fMin" min="0.01" step="any" value="1" placeholder="e.g. 1">
+        </div>
+      </div>
+      <p class="hint">Price is per unit. Use preset (kg, ml…) or type a custom label like <b>100ml</b> or <b>bottle</b>. Step = −/+ ; Minimum = smallest order.</p>
       <div class="row2">
         <div class="field"><label>Image</label><input type="text" id="fImg" placeholder="photos/61.jpg"></div>
         <div class="field"><label>2nd image</label><input type="text" id="fImg2"></div>
       </div>
       <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="fBuilder"> Weekly Asbeza builder</label>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px;margin-top:8px"><input type="checkbox" id="fInStock" checked> In stock</label>
     </div>
     <div class="modal-foot">
       <button type="button" class="btn btn-ghost" id="editCancel">Cancel</button>
@@ -323,6 +368,15 @@
   ];
   let products = [], editingId = null, CATEGORIES = loadCategories();
 
+  function inferUnit(p){
+    if(p && p.unit) return String(p.unit);
+    var n = String((p && p.name) || '').toLowerCase();
+    if(/\bml\b/.test(n)) return 'ml';
+    if(/\b\d+\s*g\b/.test(n) && !/kg/.test(n)) return 'g';
+    if(/\bl\b|liter|oil|ዘይት/.test(n)) return 'L';
+    if(/kg|kilo|flour|rice|lentil|potato|onion|carrot|cabbage|garlic|avocado|teff|shiro|misir|ater|qinche|beso|aja|ድንች|ሽንኩርት|ምስር|አተር|ቅንጨ|በሶ|አጃ|ሩዝ|ተፍ/.test(n)) return 'kg';
+    return 'pcs';
+  }
   function esc(s){ return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
   function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2200); }
   async function hashPassword(str){ const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str)); return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join(''); }
@@ -349,6 +403,79 @@
   function recordFail(){ var s=getLockState(); s.attempts=(s.attempts||0)+1; if(s.attempts>=MAX_ATTEMPTS){ s.until=Date.now()+LOCK_MINUTES*60000; s.attempts=0; localStorage.setItem('dejaf_admin_lock',JSON.stringify(s)); return true; } localStorage.setItem('dejaf_admin_lock',JSON.stringify(s)); return false; }
   function clearFails(){ localStorage.removeItem('dejaf_admin_lock'); }
 
+  
+  // ===== Orders board (Firebase) =====
+  var cachedOrders = [];
+  function statusLabel(s){
+    var m={new:'New',confirmed:'Confirmed',packing:'Packing',delivering:'On the way',delivered:'Delivered',cancelled:'Cancelled'};
+    return m[s]||s||'new';
+  }
+  function renderOrdersBoard(){
+    var box=document.getElementById('ordersBoard');
+    if(!box) return;
+    var filter=(document.getElementById('orderStatusFilter')||{}).value||'all';
+    var rows=cachedOrders.slice();
+    if(filter!=='all') rows=rows.filter(function(o){ return (o.status||'new')===filter; });
+    rows.sort(function(a,b){ return (b.at||0)-(a.at||0); });
+    if(!rows.length){
+      box.className='empty-panel';
+      box.textContent=firebaseReady?'No orders yet. Place a test order from the shop.':'Firebase not connected.';
+      return;
+    }
+    box.className='';
+    box.innerHTML=rows.map(function(o){
+      var items=(o.items||[]).map(function(it){
+        return '<li>'+esc(it.name)+' × '+esc(String(it.qty))+(it.measure?' '+esc(it.measure):'')+'</li>';
+      }).join('');
+      var when=o.at? new Date(o.at).toLocaleString():'';
+      var st=o.status||'new';
+      return '<div class="panel-block" style="margin-bottom:10px" data-oid="'+esc(o._key||o.orderId)+'">'+
+        '<div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">'+
+        '<strong>'+esc(o.orderId||o._key)+'</strong>'+
+        '<span class="mono">'+esc(String(o.total!=null?o.total:''))+' ETB</span></div>'+
+        '<p class="hint">'+esc(when)+' · '+esc(o.channel||'')+' · '+(o.itemCount||(o.items||[]).length)+' items</p>'+
+        (o.zoneLabel? '<p class="hint">Zone: '+esc(o.zoneLabel)+(o.delivery!=null?' · Delivery ETB '+o.delivery:'')+'</p>':'')+
+        (o.coupon? '<p class="hint">Coupon: '+esc(o.coupon)+(o.discount? ' (−'+o.discount+')':'')+'</p>':'')+
+        (o.note? '<p class="hint"><b>Note:</b> '+esc(o.note)+'</p>':'')+
+        '<ul style="margin:6px 0 8px 18px;font-size:13px">'+items+'</ul>'+
+        '<label class="hint">Status </label>'+
+        '<select class="order-status-sel" data-key="'+esc(o._key||'')+'">'+
+        ['new','confirmed','packing','delivering','delivered','cancelled'].map(function(s){
+          return '<option value="'+s+'"'+(s===st?' selected':'')+'>'+statusLabel(s)+'</option>';
+        }).join('')+
+        '</select></div>';
+    }).join('');
+    box.querySelectorAll('.order-status-sel').forEach(function(sel){
+      sel.onchange=function(){
+        var key=sel.getAttribute('data-key');
+        if(!key||!db) return;
+        db.ref('orders/'+key).update({ status: sel.value, statusAt: Date.now() }).then(function(){
+          toast('Status → '+statusLabel(sel.value));
+        }).catch(function(e){ alert('Update failed: '+e.message); });
+      };
+    });
+  }
+  function listenOrders(){
+    if(!db) return;
+    db.ref('orders').on('value', function(snap){
+      var val=snap.val();
+      cachedOrders=[];
+      if(!val){ renderOrdersBoard(); return; }
+      if(Array.isArray(val)){
+        val.forEach(function(o,i){ if(o){ o._key=String(i); cachedOrders.push(o); } });
+      } else {
+        Object.keys(val).forEach(function(k){
+          var o=val[k]||{}; o._key=k; cachedOrders.push(o);
+        });
+      }
+      renderOrdersBoard();
+      // dashboard alert
+      var nNew=cachedOrders.filter(function(o){ return (o.status||'new')==='new'; }).length;
+      var al=document.getElementById('dashAlerts');
+      if(al) al.textContent=nNew? (nNew+' new order(s) need attention.') : 'No urgent alerts.';
+    });
+  }
+
   function showSection(id){
     document.querySelectorAll('.admin-section').forEach(function(s){ s.classList.toggle('active', s.dataset.section===id); });
     document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.toggle('active', n.dataset.section===id); });
@@ -356,6 +483,7 @@
     document.getElementById('pageTitle').textContent=titles[id]||'Admin';
     if(id==='dashboard') renderDashboard();
     if(id==='products') renderTable();
+    if(id==='orders') renderOrdersBoard();
     if(id==='settings'){ renderStaff(); renderCatList(); }
   }
   function renderDashboard(){
@@ -388,7 +516,7 @@
     });
     var tb=document.getElementById('productTable');
     tb.innerHTML=rows.map(function(p){
-      return '<tr><td class="mono">'+p.id+'</td><td>'+esc(p.name)+(p.sale!=null?' <span class="badge sale">SALE</span>':'')+(p.builder?' <span class="badge">Asbeza</span>':'')+'</td><td>'+esc(p.cat)+(p.subcat?' · '+esc(p.subcat):'')+'</td><td class="mono">'+(p.sale!=null?p.sale:p.price)+'</td><td><button type="button" class="btn btn-ghost btn-sm" data-e="'+p.id+'">Edit</button> <button type="button" class="btn btn-danger btn-sm" data-d="'+p.id+'">Del</button></td></tr>';
+      return '<tr><td class="mono">'+p.id+'</td><td>'+esc(p.name)+(p.sale!=null?' <span class="badge sale">SALE</span>':'')+(p.builder?' <span class="badge">Asbeza</span>':'')+'</td><td>'+esc(p.cat)+(p.subcat?' · '+esc(p.subcat):'')+'</td><td class="mono">'+(p.sale!=null?p.sale:p.price)+'</td><td class="mono">'+esc(p.unit||'pcs')+(p.step&&p.step!=1?' ×'+p.step:'')+'</td><td><button type="button" class="btn btn-ghost btn-sm" data-e="'+p.id+'">Edit</button> <button type="button" class="btn btn-danger btn-sm" data-d="'+p.id+'">Del</button></td></tr>';
     }).join('');
     tb.querySelectorAll('[data-e]').forEach(function(b){ b.onclick=function(){ openEdit(Number(b.dataset.e)); }; });
     tb.querySelectorAll('[data-d]').forEach(function(b){ b.onclick=function(){ if(!confirm('Delete '+b.dataset.d+'?')) return; products=products.filter(function(p){ return p.id!==Number(b.dataset.d); }); saveProducts(); renderTable(); }; });
@@ -408,6 +536,17 @@
     document.getElementById('fImg').value=p?(p.img||''):'';
     document.getElementById('fImg2').value=p?(p.img2||''):'';
     document.getElementById('fBuilder').checked=!!(p&&p.builder);
+    document.getElementById('fInStock').checked=p? (p.inStock!==false) : true;
+    (function(){
+      var u=(p&&p.unit)?String(p.unit):inferUnit(p||{});
+      var presets={pcs:1,kg:1,L:1,g:1,ml:1};
+      var sel=document.getElementById('fUnit');
+      var cust=document.getElementById('fUnitCustom');
+      if(presets[u]){ sel.value=u; cust.value=''; }
+      else { sel.value='custom'; cust.value=u; }
+    })();
+    document.getElementById('fStep').value=(p&&p.step!=null&&p.step!=='')?p.step:1;
+    document.getElementById('fMin').value=(p&&p.min!=null&&p.min!=='')?p.min:1;
     refreshSubcatSuggestions();
     document.getElementById('editModal').classList.add('open');
   }
@@ -424,12 +563,22 @@
     var img=document.getElementById('fImg').value.trim();
     var img2=document.getElementById('fImg2').value.trim();
     var builder=document.getElementById('fBuilder').checked;
+    var inStock=document.getElementById('fInStock').checked;
+    var unitSel=(document.getElementById('fUnit').value||'pcs').trim();
+    var unitCustom=(document.getElementById('fUnitCustom').value||'').trim();
+    var unit=(unitSel==='custom' ? (unitCustom||'pcs') : unitSel) || 'pcs';
+    if(unitCustom && unitSel!=='custom' && unitCustom!==unitSel) unit=unitCustom;
+    var step=Number(document.getElementById('fStep').value);
+    if(!step||step<=0) step=1;
+    var minq=Number(document.getElementById('fMin').value);
+    if(!minq||minq<=0) minq=1;
     if(!id||!name||!cat||(!price&&price!==0)){ alert('Fill required fields'); return; }
     if(editingId==null&&products.some(function(p){ return p.id===id; })){ alert('ID exists'); return; }
-    var obj={id:id,name:name,cat:cat,price:price,sale:sale,img:img||null,desc:desc};
+    var obj={id:id,name:name,cat:cat,price:price,sale:sale,img:img||null,desc:desc,unit:unit,step:step,min:minq};
     if(subcat) obj.subcat=subcat;
     if(img2) obj.img2=img2;
     if(builder) obj.builder=true;
+    obj.inStock=inStock;
     if(editingId==null) products.push(obj);
     else { var i=products.findIndex(function(p){ return p.id===editingId; }); if(i>=0) products[i]=obj; }
     saveProducts(); closeEdit(); renderTable();
@@ -486,9 +635,33 @@
   document.getElementById('btnLogout').onclick=function(){ destroySession(); location.reload(); };
   document.querySelectorAll('.nav-item').forEach(function(n){ n.addEventListener('click',function(){ showSection(n.dataset.section); }); });
   document.getElementById('btnAdd').onclick=function(){ openEdit(null); };
+  var of=document.getElementById('orderStatusFilter'); if(of) of.onchange=renderOrdersBoard;
+  var br=document.getElementById('btnRefreshOrders'); if(br) br.onclick=function(){ renderOrdersBoard(); toast('Refreshed'); };
+  var fixBtn=document.getElementById('btnFixUnits');
+  if(fixBtn) fixBtn.onclick=function(){
+    var n=0;
+    products.forEach(function(p){
+      var u=inferUnit(p);
+      if(!p.unit || p.unit==='pcs' && u!=='pcs'){ p.unit=u; n++; }
+      if(p.step==null) p.step=(u==='kg'||u==='L')?0.5:1;
+      if(p.min==null) p.min=1;
+    });
+    saveProducts(); renderTable();
+    toast('Updated units on '+n+' products — Save syncs to shop');
+  };
   document.getElementById('editClose').onclick=closeEdit;
   document.getElementById('editCancel').onclick=closeEdit;
   document.getElementById('editSave').onclick=saveEdit;
+  (function(){
+    var sel=document.getElementById('fUnit');
+    var cust=document.getElementById('fUnitCustom');
+    if(sel&&cust){
+      sel.addEventListener('change', function(){
+        if(sel.value!=='custom'){ /* keep custom as optional override */ }
+        else if(!cust.value) cust.focus();
+      });
+    }
+  })();
   document.getElementById('btnExport').onclick=openExport;
   document.getElementById('exportClose').onclick=function(){ document.getElementById('exportModal').classList.remove('open'); };
   document.getElementById('btnCopy').onclick=async function(){ var t=document.getElementById('exportCode'); t.select(); try{ await navigator.clipboard.writeText(t.value); toast('Copied'); }catch(e){ document.execCommand('copy'); toast('Copied'); } };
