@@ -10,8 +10,8 @@
   --ink:#111111;
   --paper:#FFFFFF;
   --paper-dim:#F5F5F5;
-  --gold:#C9A227;              /* real gold (was #111111) */
-  --gold-light:#D4AF37;
+  --gold:#3D2314;              /* real gold (was #111111) */
+  --gold-light:#6B3E26;
   --rust:#B5482A;              /* fixed invalid #B5482J */
   --green:#37613F;
   --charcoal:#111111;
@@ -20,7 +20,7 @@
   --shadow: 0 12px 40px rgba(0,0,0,0.12);
   --card:#FFFFFF;
   --card-text:#111111;
-  --btn:#D4AF37;
+  --btn:#3D2314;
 }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Inter',sans-serif;background:var(--card);color:var(--ink);min-height:100vh}
@@ -31,7 +31,7 @@
   code{font-family:'JetBrains Mono',monospace;font-size:12px}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;border-radius:6px;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit}
   .btn-primary{background:var(--ink);color:var(--paper)}
-  .btn-gold{background:var(--gold);color:#D4AF37}
+  .btn-gold{background:var(--gold);color:#fff}
   .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
   .btn-danger{background:#fff;border:1px solid #e8b4a8;color:var(--rust)}
   .btn-sm{padding:7px 12px;font-size:12px}
@@ -60,7 +60,7 @@
   .nav-section{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(245,237,224,.4);padding:14px 10px 6px}
   .nav-item{display:block;width:100%;text-align:left;border:none;background:transparent;color:rgba(245,237,224,.92);padding:9px 12px;border-radius:8px;font-size:13px;cursor:pointer;margin:2px 0;font-family:inherit}
   .nav-item:hover{background:rgba(255,255,255,.06)}
-  .nav-item.active{background:var(--gold);color:#1A1008;font-weight:700}
+  .nav-item.active{background:var(--gold);color:#fff;font-weight:700}
   .sidebar-foot{margin-top:16px;padding:8px}
   .main-wrap{flex:1;min-width:0;display:flex;flex-direction:column}
   .topbar{background:var(--ink);color:var(--paper);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
